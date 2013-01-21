@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 android-GPS-Test-Tool
 ==================
 
@@ -60,3 +61,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 A copy of the license is available in the repository's [license.txt]( https://raw.github.com/Esri/switch-basemaps-js/master/license.txt) file.
+=======
+android-gps-test-tool
+=====================
+
+Test all aspects of Android's location capabilities. Configurable for trying out different scenarios. 
+>>>>>>> 1d72ee174a09ba8b65a719dd9a024674d14a3338
