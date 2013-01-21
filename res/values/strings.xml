@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, GPSTesterActivity!</string>
+    <string name="app_name">GPSTester</string>
+    <string name="GPS">GPS</string>
+    <string name="GPS_Icon">GPS Icon</string>
+    <string name="Network">Network</string>
+    <string name="Network_Icon">Network Icon</string>
+    <string name="Criteria">Criteria</string>
+    <string name="Criteria_Icon">Criteria Icon</string>
+    <string name="Map">Map</string>
+    <string name="Sat_data">Sat data</string>
+    <string name="Pause">Pause</string>
+    <string name="Start">Start</string>
+    <string name="Stop">Stop</string>
+    <string name="Email">Email</string>
+    <string name="redCircle">Red Circle</string>
+    <string name="blueCircle">Blue Circle</string>
+    <string name="blackDiamond">Black Diamond</string>
+    <string name="greenDiamond">Green Diamond</string>
+    <string name="redDiamond">Red Diamond</string>
+    <string name="bestAvailableImageView">Best Available ImageView</string>
+</resources>
