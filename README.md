@@ -11,11 +11,11 @@ Main View:
 
 Satellite Data View:
 
-![App](https://raw.github.com/Esri/android-GPS-Test-Tool/master/gpstester_satellite_view.png)
+![App](https://github.com/Esri/android-gps-test-tool/blob/master/gpstester_satellite_view.png)
 
 Settings View:
 
-![App](https://raw.github.com/Esri/android-GPS-Test-Tool/master/gpstester_settings_view.png)
+![App](https://github.com/Esri/android-gps-test-tool/blob/master/gpstester_settings_view.png)
 
 ## Features
 * Maps Network and GPS locations.
