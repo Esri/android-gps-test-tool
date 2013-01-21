@@ -7,7 +7,7 @@ It's highly configurable and you can use it to test GPS and Network location out
 
 Main View:
 
-![App](https://raw.github.com/Esri/android-GPS-Test-Tool/master/gpstester_main_view.png)
+![App](https://github.com/Esri/android-gps-test-tool/blob/master/gpstester_main_view.png)
 
 Satellite Data View:
 
