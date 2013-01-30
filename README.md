@@ -1,21 +1,21 @@
-<<<<<<< HEAD
 android-GPS-Test-Tool
 ==================
 
 This application helps you test and understand the different aspects of the Android location capabilities. 
 It's highly configurable and you can use it to test GPS and Network location output across multiple devices.
+Test all aspects of Android's location capabilities. Configurable for trying out different scenarios. 
 
 Main View:
 
-![App](https://raw.github.com/Esri/android-GPS-Test-Tool/master/gpstester_main_view.png)
+![App](https://raw.github.com/Esri/android-gps-test-tool/master/gpstester_main_view.png)
 
 Satellite Data View:
 
-![App](https://raw.github.com/Esri/android-GPS-Test-Tool/master/gpstester_satellite_view.png)
+![App](https://raw.github.com/Esri/android-gps-test-tool/master/gpstester_satellite_view.png)
 
 Settings View:
 
-![App](https://raw.github.com/Esri/android-GPS-Test-Tool/master/gpstester_settings_view.png)
+![App](https://raw.github.com/Esri/android-gps-test-tool/master/gpstester_settings_view.png)
 
 ## Features
 * Maps Network and GPS locations.
@@ -48,7 +48,7 @@ Anyone and everyone is welcome to contribute.
 ## Licensing
 Copyright 2012 Esri
 
-Application source code licensed under the Apache License, Version 2.0 (the "License");
+Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
@@ -60,10 +60,4 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-A copy of the license is available in the repository's [license.txt]( https://raw.github.com/Esri/switch-basemaps-js/master/license.txt) file.
-=======
-android-gps-test-tool
-=====================
-
-Test all aspects of Android's location capabilities. Configurable for trying out different scenarios. 
->>>>>>> 1d72ee174a09ba8b65a719dd9a024674d14a3338
+A copy of the license is available in the repository's [license.txt]( https://raw.github.com/Esri/android-gps-test-tool/master/license.txt) file.
