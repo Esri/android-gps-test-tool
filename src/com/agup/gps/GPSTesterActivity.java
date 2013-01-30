@@ -15,7 +15,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
-
 public class GPSTesterActivity extends Activity {
 	
 	private GPSTesterActivityController _activityController = null;

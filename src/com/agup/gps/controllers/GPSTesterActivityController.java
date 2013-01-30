@@ -299,21 +299,21 @@ public class GPSTesterActivityController {
 			_lastKnownLocationGPSProvider = _locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 		}
 		catch(Exception exc){
-			Log.d("GPSTester","setLocationManagerUI() " + exc.getMessage());
+			Log.d("GPSTester","setLocationManagerUI() " + exc.toString());
 		}
-		
-		_cachedGPSLatitude = _lastKnownLocationGPSProvider.getLatitude();
-		_cachedGPSLongitude = _lastKnownLocationGPSProvider.getLongitude();
-		_cachedGPSAccuracy = _lastKnownLocationGPSProvider.getAccuracy();
-		_cachedNetworkLatitude = _lastKnownLocationNetworkProvider.getLatitude();
-		_cachedNetworkLongitude = _lastKnownLocationNetworkProvider.getLongitude();	
-		_cachedNetworkAccuracy = _lastKnownLocationNetworkProvider.getAccuracy();
-		final long cachedGPSTime = _lastKnownLocationGPSProvider.getTime();		
-		final long cachedNetworkTime = _lastKnownLocationNetworkProvider.getTime();
 	
 		//NOTE: This does not take into account if _cachedGPSTime == _cachedNetworkTime
 		//The changes of that happening are small.
 		if(_lastKnownLocationGPSProvider != null && _lastKnownLocationNetworkProvider != null){
+			
+			_cachedGPSLatitude = _lastKnownLocationGPSProvider.getLatitude();
+			_cachedGPSLongitude = _lastKnownLocationGPSProvider.getLongitude();
+			_cachedGPSAccuracy = _lastKnownLocationGPSProvider.getAccuracy();
+			_cachedNetworkLatitude = _lastKnownLocationNetworkProvider.getLatitude();
+			_cachedNetworkLongitude = _lastKnownLocationNetworkProvider.getLongitude();	
+			_cachedNetworkAccuracy = _lastKnownLocationNetworkProvider.getAccuracy();
+			final long cachedGPSTime = _lastKnownLocationGPSProvider.getTime();		
+			final long cachedNetworkTime = _lastKnownLocationNetworkProvider.getTime();			
 			
 			String bestAvailableText = "";
 				    	
@@ -427,7 +427,7 @@ public class GPSTesterActivityController {
 	    criteria.setCostAllowed(cost);
 	    criteria.setPowerRequirement(power);
 	    
-	    String finalBestProvider = "<b><font color='yellow'>Best Provider</font></b><br>";
+	    String finalBestProvider = "<b><font color='yellow'>Best Provider (via Criteria)</font></b><br>";
 	    String bestProviderName = _locationManager.getBestProvider(criteria, true);
 	    
 	    if(bestProviderName != null){
