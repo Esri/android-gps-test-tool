@@ -20,14 +20,17 @@ Settings View:
 ## Features
 * Maps Network and GPS locations.
 * Displays information on both Network and GPS Location.
+* Displays satellite and NMEA data
 * Let's you configure and try out different scenarios.
+* Access configuration via the application settings menu.
 
-## Requirements
+## Requirements (IMPORTANT)
 
 * Eclipse
-* Google Android SDK
-* Mapping Library - [ArcGIS Runtime SDK for Android](http://resources.arcgis.com/en/communities/runtime-android/)
-* Experience with Java
+* Google Android SDK (version 15 or greater strongly recommended)
+* Android Phone or Tablet (v3.x or greater) App contains UI fragments.
+* Mapping Library - Installation instructions here: [ArcGIS Runtime SDK for Android](http://resources.arcgis.com/en/communities/runtime-android/)
+* Experience with Java software development
 
 Click [here](http://resources.arcgis.com/en/help/android-sdk/concepts/0119/01190000002m000000.htm) for more information on installing the mapping library.
 
