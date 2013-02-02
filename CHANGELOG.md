@@ -1,5 +1,8 @@
 # GPSTester - Changelog
 
+## Version 1.2 - February 1, 2013
+- Fixed tricky threading bugs in the delayedStartLocationProvider() and delayedStartCachedLocationProviders() methods. Previous construction might have been causing crashes when the application restarted after being idle and minimized for some time period.
+- Rewrote the entire crazy if/else structure in startLocation() 
 
 ## Version 1.1 - January 30, 2013
 

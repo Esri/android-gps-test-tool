@@ -3,10 +3,8 @@ package com.agup.gps.controllers;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.security.acl.LastOwnerException;
 import java.text.DecimalFormat;
 import java.util.List;
-import java.util.Vector;
 
 import com.agup.gps.R;
 import com.agup.gps.SatelliteDataActivity;
@@ -15,11 +13,7 @@ import com.agup.gps.fragments.GPSAlertDialogFragment;
 import com.agup.gps.utils.ElapsedTimer;
 import com.esri.android.map.MapView;
 import com.esri.core.symbol.SimpleMarkerSymbol;
-import com.esri.core.tasks.ags.geocode.LocatorGeocodeResult;
-import com.esri.core.tasks.ags.geocode.LocatorReverseGeocodeResult;
 import com.esri.quickstart.EsriQuickStart;
-import com.esri.quickstart.EsriQuickStartEvent;
-import com.esri.quickstart.MapViewEventType;
 import com.esri.quickstart.EsriQuickStart.MapType;
 import com.esri.quickstart.EsriQuickStartEventListener;
 
@@ -766,142 +760,152 @@ public class GPSTesterActivityController {
 	}
 	
 	/**
-	 * Uses a Handler to check at intervals until the base map has fully initialized. 
+	 * Uses a Runnable to check at intervals until the base map has fully initialized. 
 	 * Fails if an initialized map is not detected after 5 tries. Map has to be loaded in 
 	 * order to manipulate it and draw graphics on it.
 	 * @param startGPS if you set this to false it will attempt to start Network Listeners. 
 	 */	
 	public void delayedStartCachedLocationProviders(){
-		final Handler handler = new Handler();		
-		final boolean centerUsingGPS = _preferences.getBoolean("pref_key_centerOnGPSCoords", true);		 		
 		
 		Runnable task = new Runnable() {
+
+			int counter = 0;
 			
 			@Override
 			public void run() {
-				// TODO Auto-generated method stub
-				try{
 
-					handler.postDelayed(new Runnable() {
-						int counter = 0;
+				final Handler handler = new Handler();
+				counter++;
 						
-						@Override
-						public void run() {
-							counter++;
-							try{ 
-								boolean test = _map.isMapLoaded();
-								Log.d("GPSTester","delayedStartCachedLocationProviders(): Testing if layer is loaded. Attempt #" + counter);
-								if(test == true){
-									
-									Log.d("GPSTester","delayedStartCachedLocationProviders(): map is loaded.");
-									Boolean mapLoaded = _map.layerExists(MapType.TOPO);															
-									
-									if(mapLoaded == true && _lastKnownLocationGPSProvider != null && _lastKnownLocationNetworkProvider != null){			
-
-										if(centerUsingGPS == false){
-											_map.centerAt(_cachedNetworkLatitude, _cachedNetworkLongitude, 4500.0, true);
-										}
-										else{
-								    		_map.centerAt(_cachedGPSLatitude, _cachedGPSLongitude, 4500.0, true);
-										}
-										
-								    	//Add Network location to map and give it a unique symbol
-										_map.addGraphicLatLon(
-												_cachedNetworkLatitude,
-												_cachedNetworkLongitude, 
-								    			null, 
-								    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.GREEN,
-								    			15);		
-										
-								    	//Add GPS location to the map and give it a unique symbol
-										_map.addGraphicLatLon(
-												_cachedGPSLatitude, 
-												_cachedGPSLongitude, 
-								    			null, 
-								    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.RED,
-								    			15);					
-									}
-								}
-								else{
-									if(counter < 5){
-										handler.postDelayed(this, 5000);
-									}
-									else{
-										Log.d("GPSTester","delayedStartCachedLocationProviders(): Unable to start Location Listener.");
-										_map.displayToast("Map not loading? Try restarting app.", Toast.LENGTH_LONG);
-									}
-								}
-							}
-							catch(Exception exc){
-								Log.d("GPSTester","delayedStartCachedLocationProviders() exception: " + exc.toString());
-							}
-							
+				try{ 
+					boolean test = _map.isMapLoaded();
+					Log.d("GPSTester","delayedStartCachedLocationProviders(): Testing if layer is loaded. Attempt #" + counter);
+					if(test == true){
+						
+						Log.d("GPSTester","delayedStartCachedLocationProviders(): map is loaded.");
+						Boolean mapLoaded = _map.layerExists(MapType.TOPO);															
+						
+						if(mapLoaded == true && _lastKnownLocationGPSProvider != null && _lastKnownLocationNetworkProvider != null){			
+							//Run results back on the UI thread
+							_map.post(mDelayedStartUpdateResultsOnUI);
 						}
-					}, 250);					
+					}
+					else if (counter < 5){
+							handler.postDelayed(this, 5000);
+					}
+					else{
+						Log.d("GPSTester","delayedStartCachedLocationProviders(): Unable to start Location Listener.");
+						//Run Toast on UI thread
+						_map.post(new Runnable() {
+							
+							@Override
+							public void run() {
+								_map.displayToast("Map not loading? Try restarting app.", Toast.LENGTH_LONG);									
+							}
+						});						
+					}
 				}
 				catch(Exception exc){
 					Log.d("GPSTester","delayedStartCachedLocationProviders() exception: " + exc.toString());
-				}
+				}			
 			}
 		};
 		
 		task.run();
 	}		
 	
+	//Run the results back on the UI thread
+	private final Runnable mDelayedStartUpdateResultsOnUI = new Runnable() {
+		
+		@Override
+		public void run() {	
+			
+			final boolean centerUsingGPS = _preferences.getBoolean("pref_key_centerOnGPSCoords", true);	
+			
+			if(centerUsingGPS == false){
+				_map.centerAt(_cachedNetworkLatitude, _cachedNetworkLongitude, 4500.0, true);
+			}
+			else{
+	    		_map.centerAt(_cachedGPSLatitude, _cachedGPSLongitude, 4500.0, true);
+			}
+			
+	    	//Add Network location to map and give it a unique symbol
+			_map.addGraphicLatLon(
+					_cachedNetworkLatitude,
+					_cachedNetworkLongitude, 
+	    			null, 
+	    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.GREEN,
+	    			15);		
+			
+	    	//Add GPS location to the map and give it a unique symbol
+			_map.addGraphicLatLon(
+					_cachedGPSLatitude, 
+					_cachedGPSLongitude, 
+	    			null, 
+	    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.RED,
+	    			15);					
+			
+		}
+	};	
+	
 	/**
-	 * Uses a Handler to check at intervals until the base map has fully initialized. 
+	 * Uses a Runnable to check at intervals until the base map has fully initialized. 
 	 * Fails if an initialized map is not detected after 5 tries. Map has to be loaded in 
 	 * order to manipulate it and draw graphics on it.
 	 * @param startGPS if you set this to false it will attempt to start Network Listeners. 
 	 */	
 	public void delayedStartLocationProvider(final Boolean startGPS){
-		final Handler handler = new Handler();		
-		final boolean centerUsingGPS = _preferences.getBoolean("pref_key_centerOnGPSCoords", true);		
-		final int blueMapGraphicSize = Integer.valueOf(_preferences.getString("pref_key_networkGraphicSize", "10"));	
-		final int redMapGraphicSize = Integer.valueOf(_preferences.getString("pref_key_gpsGraphicSize", "10"));  		
 		
 		Runnable task = new Runnable() {
+
+			int counter = 0;
 			
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
-				try{
 
-					handler.postDelayed(new Runnable() {
-						int counter = 0;
+				final Handler handler = new Handler();
+				counter++;
+				
+				try{ 
+					boolean test = _map.isMapLoaded();
+					Log.d("GPSTester","delayedStartLocationProvider(): Testing if layer is loaded. Attempt #" + counter);
+					if(test == true){
 						
-						@Override
-						public void run() {
-							counter++;
-							try{ 
-								boolean test = _map.isMapLoaded();
-								Log.d("GPSTester","delayedStartLocationProvider(): Testing if layer is loaded. Attempt #" + counter);
-								if(test == true){
-									
-									Log.d("GPSTester","delayedStartLocationProvider(): map is loaded.");
-									if(startGPS == true){
-										setLocationListenerGPSProvider();
-									}
-									else{
-										setLocationListenerNetworkProvider();
-									}
+						Log.d("GPSTester","delayedStartLocationProvider(): map is loaded.");
+						
+						//Switch back to running the following methods on the UI thread
+						_map.post(new Runnable() {
+							
+							@Override
+							public void run() {
+								if(startGPS == null){
+									setLocationListenerGPSProvider();
+									setLocationListenerNetworkProvider();
+								}
+								else if(startGPS == true){
+									setLocationListenerGPSProvider();
 								}
 								else{
-									if(counter < 5){
-										handler.postDelayed(this, 5000);
-									}
-									else{
-										Log.d("GPSTester","delayedStartLocationProvider(): Unable to start Location Listener.");
-										_map.displayToast("Map not loading? Try restarting app.", Toast.LENGTH_LONG);
-									}
+									setLocationListenerNetworkProvider();
 								}
 							}
-							catch(Exception exc){
-								Log.d("GPSTester","delayedStartLocationProvider() exception: " + exc.toString());
-							}
+						});									
+					}
+					else if (counter < 5){
+						handler.postDelayed(this, 5000);
+					}
+					else{
+						Log.d("GPSTester","delayedStartLocationProvider(): Unable to start Location Listener.");
+						//Display toast on the UI thread
+						_map.post(new Runnable() {
 							
-						}
-					}, 250);					
+							@Override
+							public void run() {
+								_map.displayToast("Map not loading? Try restarting app.", Toast.LENGTH_LONG);									
+							}
+						});	
+					}						
 				}
 				catch(Exception exc){
 					Log.d("GPSTester","centerAndZoomIfMapLoaded() exception: " + exc.toString());
@@ -910,7 +914,9 @@ public class GPSTesterActivityController {
 		};
 		
 		task.run();
-	}	
+		//Thread thread = new Thread(task);
+		//thread.start();
+	}
 	
 	/**
 	 * Start and reset everything
@@ -948,44 +954,67 @@ public class GPSTesterActivityController {
 			setUI();
 			setLocationManagerUI(gpsProviderEnabled,networkProviderEnabled);			
 			
-			if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == true){
-				if(useCriteria == false || (useCriteria == true && bestProviderName.equalsIgnoreCase("gps") == true)){
-					//setLocationListenerGPSProvider();
-					delayedStartLocationProvider(true);
-					_imGPS.setImageResource(R.drawable.greensphere31);						
-				}			
+			if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == true &&
+					networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == true){
+				Log.d("GPSTester","Startup: GPS enabled true. GPS prefs true. Network enabled. Network Prefs true");
+				delayedStartLocationProvider(null);					
+			
+				_imGPS.setImageResource(R.drawable.greensphere31);	
+				_imNetwork.setImageResource(R.drawable.greensphere31);	
 			}
-			else if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == false){
-				Log.d("GPSTester","GPS Provider not enabled. Unable to set location listener.");
-				_imGPS.setImageResource(R.drawable.redsphere31);
+			else if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == true &&
+					networkProviderEnabled == false){
+				Log.d("GPSTester","Startup: GPS enabled true. GPS prefs true. Network not enabled.");
+				delayedStartLocationProvider(true);
+				
+				_imGPS.setImageResource(R.drawable.greensphere31);	
+				_imNetwork.setImageResource(R.drawable.redsphere31);
+				_map.displayToast("No network connection available.", Toast.LENGTH_LONG);
 			}
-			else{
-				Log.d("GPSTester","GPS Provider not enabled. Unable to set location listener.");
+			else if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == false &&
+					networkProviderEnabled == false){
+				Log.d("GPSTester","Startup: GPS enabled true. GPS prefs false. Network not enabled.");					
+				_imGPS.setImageResource(R.drawable.redsphere31);	
+				_imNetwork.setImageResource(R.drawable.redsphere31);
+				_map.displayToast("No network connection available.", Toast.LENGTH_LONG);
+			}						
+			else if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == false &&
+					networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == true){
+				Log.d("GPSTester","Startup: GPS enabled. GPS prefs false. Network enabled. Network Prefs true ");
+				delayedStartLocationProvider(false);
+				
 				_imGPS.setImageResource(R.drawable.redsphere31);
+				_imNetwork.setImageResource(R.drawable.greensphere31);				
+			}
+			else if(gpsProviderEnabled == false && 
+					networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == true){
+				Log.d("GPSTester","Startup: GPS not enabled. Network enabled. Network Prefs true.");
+				delayedStartLocationProvider(false);
+				
+				_imGPS.setImageResource(R.drawable.redsphere31);
+				_imNetwork.setImageResource(R.drawable.greensphere31);	
+	
+				//Inflate alert dialog
+				DialogFragment gpsFragment = new GPSAlertDialogFragment();
+				gpsFragment.show(_activity.getFragmentManager(), "GPSAlert");
+			}
+			else if(gpsProviderEnabled == false && 
+					networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == false){
+				Log.d("GPSTester","Startup: GPS not enabled. Network enabled. Network Prefs false.");
+				_imGPS.setImageResource(R.drawable.redsphere31);
+				_imNetwork.setImageResource(R.drawable.redsphere31);	
 	
 				//Inflate alert dialog
 				DialogFragment gpsFragment = new GPSAlertDialogFragment();
 				gpsFragment.show(_activity.getFragmentManager(), "GPSAlert");
 			}
 			
-			if(networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == true){
-				if(useCriteria == false || (useCriteria == true && bestProviderName.equalsIgnoreCase("network") == true)){
-					//setLocationListenerNetworkProvider();
-					delayedStartLocationProvider(false);
-					_imNetwork.setImageResource(R.drawable.greensphere31);				
-				}
-
-			}
-			else if(networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == false){
-				Log.d("GPSTester","Network Provider not enabled. Unable to set location listener.");
-				_imNetwork.setImageResource(R.drawable.redsphere31);	
-			}
 			else{
-				Log.d("GPSTester","Network Provider not enabled. Unable to set location listener.");
+				Log.d("GPSTester","Startup: check your GPS and network settings.");
+				_imGPS.setImageResource(R.drawable.redsphere31);
 				_imNetwork.setImageResource(R.drawable.redsphere31);	
-				_map.displayToast("No network connection available.", Toast.LENGTH_LONG);
-			}				
-			
+			}
+						
 			gpsProviderEnabled = null;
 			networkProviderEnabled = null;
 		}
