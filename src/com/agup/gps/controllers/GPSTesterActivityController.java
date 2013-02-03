@@ -770,11 +770,11 @@ public class GPSTesterActivityController {
 		Runnable task = new Runnable() {
 
 			int counter = 0;
+			final Handler handler = new Handler();
 			
 			@Override
 			public void run() {
-
-				final Handler handler = new Handler();
+				
 				counter++;
 						
 				try{ 
@@ -811,7 +811,8 @@ public class GPSTesterActivityController {
 			}
 		};
 		
-		task.run();
+		Thread thread = new Thread(task);
+		thread.start();
 	}		
 	
 	//Run the results back on the UI thread
@@ -859,12 +860,13 @@ public class GPSTesterActivityController {
 		Runnable task = new Runnable() {
 
 			int counter = 0;
+			final Handler handler = new Handler();
 			
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 
-				final Handler handler = new Handler();
+				//final Handler handler = new Handler();
 				counter++;
 				
 				try{ 
@@ -913,9 +915,8 @@ public class GPSTesterActivityController {
 			}
 		};
 		
-		task.run();
-		//Thread thread = new Thread(task);
-		//thread.start();
+		Thread thread = new Thread(task);
+		thread.start();
 	}
 	
 	/**
