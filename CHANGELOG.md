@@ -1,5 +1,8 @@
 # GPSTester - Changelog
 
+## Version 1.2.1.1 - February 3, 2013
+- Field testing showed a few more tweaks needed on the threading.
+
 ## Version 1.2.1 - February 3, 2013
 - Fixed several more threading issues as related to UI lagginess. 
 

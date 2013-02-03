@@ -767,6 +767,8 @@ public class GPSTesterActivityController {
 	 */	
 	public void delayedStartCachedLocationProviders(){
 		
+		final Handler handler = new Handler();
+		
 		Runnable task = new Runnable() {
 
 			int counter = 0;
@@ -787,7 +789,7 @@ public class GPSTesterActivityController {
 						
 						if(mapLoaded == true && _lastKnownLocationGPSProvider != null && _lastKnownLocationNetworkProvider != null){			
 							//Run results back on the UI thread
-							_map.post(mDelayedStartUpdateResultsOnUI);
+							handler.post(mDelayedStartUpdateResultsOnUI);
 						}
 					}
 					else if (counter < 5){
@@ -796,7 +798,7 @@ public class GPSTesterActivityController {
 					else{
 						Log.d("GPSTester","delayedStartCachedLocationProviders(): Unable to start Location Listener.");
 						//Run Toast on UI thread
-						_map.post(new Runnable() {
+						handler.post(new Runnable() {
 							
 							@Override
 							public void run() {
@@ -857,6 +859,8 @@ public class GPSTesterActivityController {
 	 */	
 	public void delayedStartLocationProvider(final Boolean startGPS){
 		
+		final Handler handler = new Handler();
+		
 		Runnable task = new Runnable() {
 
 			int counter = 0;
@@ -877,7 +881,7 @@ public class GPSTesterActivityController {
 						Log.d("GPSTester","delayedStartLocationProvider(): map is loaded.");
 						
 						//Switch back to running the following methods on the UI thread
-						_map.post(new Runnable() {
+						handler.post(new Runnable() {
 							
 							@Override
 							public void run() {
@@ -900,7 +904,7 @@ public class GPSTesterActivityController {
 					else{
 						Log.d("GPSTester","delayedStartLocationProvider(): Unable to start Location Listener.");
 						//Display toast on the UI thread
-						_map.post(new Runnable() {
+						handler.post(new Runnable() {
 							
 							@Override
 							public void run() {
