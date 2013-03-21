@@ -5,6 +5,15 @@ This application helps you test and understand the different aspects of the Andr
 It's highly configurable and you can use it to test GPS and Network location output across multiple devices.
 Test all aspects of Android's location capabilities. Configurable for trying out different scenarios. 
 
+More information on using the tool and working with Android geolocation capabilities are available in these three blog posts:
+
+[Six most common use cases for Android GPS](http://www.andygup.net/?p=1172)
+
+[How accurate is Android GPS? Part 1 - Understanding location data](http://www.andygup.net/?p=1105)
+
+[How accurate is Android GPS? Part 2 - consuming real-time locations](http://www.andygup.net/?p=1125)
+
+
 Main View:
 
 ![App](https://raw.github.com/Esri/android-gps-test-tool/master/gpstester_main_view.png)
