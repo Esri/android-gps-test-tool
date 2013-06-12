@@ -56,7 +56,7 @@ public class SatelliteDataActivityController {
 	private static Button _pauseButton;
 	private static Button _emailButton;
 	
-	private static String _satelliteList = "";	
+	private String _satelliteList = "";	
 	private String _gpsNMEAText = "";
 	
 	private static NmeaListener _nmeaListener = null;

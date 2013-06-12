@@ -1,5 +1,12 @@
 # GPSTester - Changelog
 
+## Version 1.3 - June 11, 2013
+- Tested app to work with EsriQuickStart v1.2.1 
+- Internal: Updated SettingsActivity to include a PreferenceFragment.
+- Added timestamps to Network Provider and GPS Provider text output.
+- Fixed issue #8: Send email did not contain satellite data.
+- Fixed issue #9: Very long decimal values for accuracy numbers. Added a four place decimal formatter to the network and GPS accuracy values.
+
 ## Version 1.2.1.1 - February 3, 2013
 - Field testing showed a few more tweaks needed on the threading.
 

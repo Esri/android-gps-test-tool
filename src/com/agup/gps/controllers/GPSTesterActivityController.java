@@ -6,17 +6,6 @@ import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
 import java.util.List;
 
-import com.agup.gps.R;
-import com.agup.gps.SatelliteDataActivity;
-import com.agup.gps.SettingsActivity;
-import com.agup.gps.fragments.GPSAlertDialogFragment;
-import com.agup.gps.utils.ElapsedTimer;
-import com.esri.android.map.MapView;
-import com.esri.core.symbol.SimpleMarkerSymbol;
-import com.esri.quickstart.EsriQuickStart;
-import com.esri.quickstart.EsriQuickStart.MapType;
-import com.esri.quickstart.EsriQuickStartEventListener;
-
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.content.Context;
@@ -41,6 +30,22 @@ import android.widget.LinearLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.agup.gps.R;
+import com.agup.gps.SatelliteDataActivity;
+import com.agup.gps.SettingsActivity;
+import com.agup.gps.fragments.GPSAlertDialogFragment;
+import com.agup.gps.fragments.NetworkAlertDialogFragment;
+import com.agup.gps.utils.CheckConnectivity;
+import com.agup.gps.utils.ElapsedTimer;
+import com.esri.android.map.MapView;
+import com.esri.core.symbol.SimpleMarkerSymbol;
+import com.esri.core.tasks.ags.geocode.LocatorGeocodeResult;
+import com.esri.core.tasks.ags.geocode.LocatorReverseGeocodeResult;
+import com.esri.quickstart.EsriQuickStart;
+import com.esri.quickstart.EsriQuickStart.MapType;
+import com.esri.quickstart.EsriQuickStartEvent;
+import com.esri.quickstart.EsriQuickStartEventListener;
 
 public class GPSTesterActivityController {
 	
@@ -84,7 +89,7 @@ public class GPSTesterActivityController {
 	private static double _cachedNetworkLatitude = 0.0;
 	private static double _cachedNetworkLongitude = 0.0;
 	private static double _cachedNetworkAccuracy = 0.0;
-	private static long _cachedNetworkTime = 0;
+	private static long _cachedNetworkTime = 0; //not currently used
 	private static double _networkLatitude = 0.0;
 	private static double _networkLongitude = 0.0;
 	private static double _networkAccuracy = 0.0;
@@ -99,7 +104,8 @@ public class GPSTesterActivityController {
 	
 	private static SharedPreferences _preferences;	
 	private static BestAvailableType _bestAvailableType;    	
-	private static final DecimalFormat _decimalFormat = new DecimalFormat("#,###.00");		
+	private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,###.00");	
+	private static final DecimalFormat DECIMAL_FORMAT_4 = new DecimalFormat("#,###.0000");
 
 	public GPSTesterActivityController(Activity activity, Context context, EsriQuickStart map){
 		_map = map;
@@ -127,7 +133,7 @@ public class GPSTesterActivityController {
 		_imSatelliteActivity = (ImageView) _activity.findViewById(R.id.satellitedata);	
 		_imCriteria = (ImageView) _activity.findViewById(R.id.criteriaEnabledIcon);
 
-		setUI();
+		//setUI();
 		setOnClickListeners();		
 
 		//This is very expensive to run - but hey if you need it...it's here.
@@ -210,7 +216,7 @@ public class GPSTesterActivityController {
 					startLocation();
 				}
 				else{
-					stopLocation();
+					stopLocation();									
 				}
 			}
 		});	
@@ -227,9 +233,9 @@ public class GPSTesterActivityController {
 	
 	private void setUI(){
 		
-		Display display = _activity.getWindowManager().getDefaultDisplay();
-		int width = display.getWidth(); //WARNING: this method was deprecated at API level 13
-		int height = (int)(display.getHeight() * .3333); //WARNING: this method was deprecated at API level 13
+		final Display display = _activity.getWindowManager().getDefaultDisplay();
+		final int width = display.getWidth(); //WARNING: this method was deprecated at API level 13
+		final int height = (int)(display.getHeight() * .3333); //WARNING: this method was deprecated at API level 13
 		
 		String bestAvailableText = "";
 		String cachedLocationNetworkProviderText = "";
@@ -237,17 +243,16 @@ public class GPSTesterActivityController {
 		String gpsLocationText = "";
 		String networkLocationText = "";
 		
-		LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
-		MapView temp = (MapView)_activity.findViewById(R.id.map);
+		final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(width, height);
+		final MapView temp = (MapView)_activity.findViewById(R.id.map);
 		temp.setLayoutParams(layoutParams);
 		
 		//Load the map
-		if(!_map.layerExists(MapType.TOPO)){
-			//_map.setLayoutParams(layoutParams);
-			_map.addLayer(MapType.TOPO, null, null, null,true); 
+		if(_map.layerExists(MapType.TOPO)){
+			_map.clearAllGraphics(); 
 		}
 		else{
-			_map.clearAllGraphics();
+			_map.addLayer(MapType.TOPO, null, null, null,true);
 		}
 		
 		bestAvailableText = "<b><font color='yellow'>Best Accuracy = N/A</b></font>" + 
@@ -282,11 +287,56 @@ public class GPSTesterActivityController {
 		
 	}
 	
+	private void setMapListeners(){
+		_map.addEventListener(new EsriQuickStartEventListener() {
+			
+			@Override
+			public void onStatusEvent(EsriQuickStartEvent event, String status,
+					Object source) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void onStatusErrorEvent(EsriQuickStartEvent event, String status) {
+				Log.d("GPSTester","setMapListeners(): " + status.toString());
+			}
+			
+			@Override
+			public void onLocationShutdownEvent(EsriQuickStartEvent event, String reason) {
+				//Not currently used
+			}
+			
+			@Override
+			public void onLocationExceptionEvent(EsriQuickStartEvent event,
+					String message) {
+				//Not currently used
+			}
+			
+			@Override
+			public void onLocationChangedEvent(EsriQuickStartEvent event,
+					Location location) {
+				//Not currently used
+			}
+			
+			@Override
+			public void onAddressResultEvent(EsriQuickStartEvent event,
+					LocatorReverseGeocodeResult result, String exception) {
+				//Not currently used
+			}
+			
+			@Override
+			public void onAddressResultEvent(EsriQuickStartEvent event,
+					List<LocatorGeocodeResult> result, String exception) {
+				//Not currently used
+			}
+		});
+	}
+	
 	protected void setLocationManagerUI(boolean gpsProviderEnabled, boolean networkProviderEnabled){
 		
 		String cachedLocationGPSProvider = "";
 		String cachedLocationNetworkProvider = "";
-		
 		
 		try{
 			_lastKnownLocationNetworkProvider = _locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -306,20 +356,20 @@ public class GPSTesterActivityController {
 			_cachedNetworkLatitude = _lastKnownLocationNetworkProvider.getLatitude();
 			_cachedNetworkLongitude = _lastKnownLocationNetworkProvider.getLongitude();	
 			_cachedNetworkAccuracy = _lastKnownLocationNetworkProvider.getAccuracy();
-			final long cachedGPSTime = _lastKnownLocationGPSProvider.getTime();		
-			final long cachedNetworkTime = _lastKnownLocationNetworkProvider.getTime();			
+			long cachedGPSTime = _lastKnownLocationGPSProvider.getTime();		
+			long cachedNetworkTime = _lastKnownLocationNetworkProvider.getTime();			
 			
 			String bestAvailableText = "";
 				    	
-	    	if(cachedGPSTime > cachedNetworkTime){
+	    	if(cachedGPSTime > cachedNetworkTime && _cachedNetworkAccuracy != 0.0){
 	    		bestAvailableText = "<b><font color='yellow'>Most Recent Accuracy</font> = <font color='red'>Cached GPS</b></font>" +
-	    				"<br><b>GPS Accuracy:</b> " + _cachedGPSAccuracy + " meters" +
+	    				"<br><b>GPS Accuracy:</b> " + DECIMAL_FORMAT_4.format(_cachedGPSAccuracy) + " meters" +
 	    				"<br><b>GPS Lat/Lon:</b> " + _cachedGPSLatitude + ", " + _cachedGPSLongitude;
 				setBestAvailableImageView(BestAvailableType.CACHED_GPS);	    		
 	    	}  
-	    	else if(cachedNetworkTime > cachedGPSTime){
+	    	else if(cachedNetworkTime > cachedGPSTime && _cachedGPSAccuracy != 0.0){
 	    		bestAvailableText = "<b><font color='yellow'>Most Recent Accuracy</font> = <font color='red'>Cached Network</b></font>" +
-	    				"<br><b>GPS Accuracy:</b> " + _cachedNetworkAccuracy + " meters" +
+	    				"<br><b>GPS Accuracy:</b> " + DECIMAL_FORMAT_4.format(_cachedNetworkAccuracy) + " meters" +
 	    				"<br><b>GPS Lat/Lon:</b> " + _cachedNetworkLatitude + ", " + _cachedNetworkLongitude;
 				setBestAvailableImageView(BestAvailableType.CACHED_NETWORK);	    		
 	    	} 	    	    	
@@ -330,43 +380,17 @@ public class GPSTesterActivityController {
 	    	}		
 		
 	    	_bestAvailableInfoTextView.setText(Html.fromHtml(bestAvailableText));	    	
+	    		    	
+	    	delayedStartCachedLocationProviders();
 		
 		}
 		
     	//setMapListeners(_lastKnownLocationGPSProvider, _lastKnownLocationNetworkProvider);
-    	delayedStartCachedLocationProviders();
 		
-		if(_lastKnownLocationNetworkProvider == null){
-			cachedLocationNetworkProvider = "<b><font color='yellow'>Cached Network Provider</font></b>" + 
-					"<br><b>Lat/Lon:</b> N/A" + 
-					"<br><b>Accuracy:</b> N/A";	
-		}
-		else{
-			
-			cachedLocationNetworkProvider = "<b><font color='yellow'>Cached Network Provider</font></b>" + 
-					"<br><b>Updated:</b> " + _elapsedTimer.convertMillisToMDYHMSS(_lastKnownLocationNetworkProvider.getTime()) +
-					"<br><b>Retrieved in:</b> " +
-					_elapsedTimer.getMinutes() + ":" +
-					_elapsedTimer.getSeconds() + ":" +
-					_elapsedTimer.getMillis() +					
-					"<br><b>Lat/Lon:</b> " + _cachedNetworkLatitude + ", " + _cachedNetworkLongitude +
-			  		"<br><b>DMSS:</b> " + 
-			  			Location.convert(_cachedNetworkLatitude, Location.FORMAT_SECONDS) + ", " +					  			
-			  			Location.convert(_cachedNetworkLongitude, Location.FORMAT_SECONDS) +					
-					"<br><b>Accuracy:</b> " + _cachedNetworkAccuracy + " meters";										
-		}
-		
-		//If the phone was restarted this can be null
-		if(_lastKnownLocationGPSProvider == null){
-			cachedLocationGPSProvider = "<b><font color='yellow'>Cached GPS Provider</font></b>" + 
-					"<br><b>Lat/Lon:</b> N/A" + 
-					"<br><b>Accuracy:</b> N/A";
-						
-		}		
-		else{			
+		if(_lastKnownLocationGPSProvider != null && _cachedGPSAccuracy != 0.0){
 			
 			cachedLocationGPSProvider = "<b><font color='yellow'>Cached GPS Provider</font></b>" + 
-					"<br><b>Updated:</b> " + _elapsedTimer.convertMillisToMDYHMSS(_lastKnownLocationGPSProvider.getTime()) +
+					"<br><b>Timestamp:</b> " + _elapsedTimer.convertMillisToMDYHMSS(_lastKnownLocationGPSProvider.getTime()) +
 					"<br><b'>Retrieved in:</b> " + 
 					_elapsedTimer.getMinutes() + ":" +
 					_elapsedTimer.getSeconds() + ":" +
@@ -375,8 +399,34 @@ public class GPSTesterActivityController {
 			  		"<br><b>DMSS:</b> " + 
 			  			Location.convert(_cachedGPSLatitude, Location.FORMAT_SECONDS) + ", " +					  			
 			  			Location.convert(_cachedGPSLongitude, Location.FORMAT_SECONDS) +					
-					"<br><b>Accuracy:</b> " + Double.toString(_cachedGPSAccuracy) + " meters";			
-		}	
+					"<br><b>Accuracy:</b> " + Double.toString(_cachedGPSAccuracy) + " meters";				
+		}
+		else{
+			cachedLocationGPSProvider = "<b><font color='yellow'>Cached GPS Provider</font></b>" + 
+					"<br><b>Lat/Lon:</b> N/A" + 
+					"<br><b>Accuracy:</b> N/A";	
+		}
+		
+		//If the phone was restarted this can be null
+		if(_lastKnownLocationNetworkProvider != null && _cachedNetworkAccuracy != 0.0){
+			
+			cachedLocationNetworkProvider = "<b><font color='yellow'>Cached Network Provider</font></b>" + 
+					"<br><b>Timestamp:</b> " + _elapsedTimer.convertMillisToMDYHMSS(_lastKnownLocationNetworkProvider.getTime()) +
+					"<br><b>Retrieved in:</b> " +
+					_elapsedTimer.getMinutes() + ":" +
+					_elapsedTimer.getSeconds() + ":" +
+					_elapsedTimer.getMillis() +					
+					"<br><b>Lat/Lon:</b> " + _cachedNetworkLatitude + ", " + _cachedNetworkLongitude +
+			  		"<br><b>DMSS:</b> " + 
+			  			Location.convert(_cachedNetworkLatitude, Location.FORMAT_SECONDS) + ", " +					  			
+			  			Location.convert(_cachedNetworkLongitude, Location.FORMAT_SECONDS) +					
+					"<br><b>Accuracy:</b> " + DECIMAL_FORMAT_4.format(_cachedNetworkAccuracy) + " meters";				
+		}				
+		else{
+			cachedLocationNetworkProvider = "<b><font color='yellow'>Cached Network Provider</font></b>" + 
+					"<br><b>Lat/Lon:</b> N/A" + 
+					"<br><b>Accuracy:</b> N/A";				
+		}
 		
 		_cachedLocationNetworkProvider.setText(Html.fromHtml(cachedLocationNetworkProvider));
 		_cachedLocationGPSProvider.setText(Html.fromHtml(cachedLocationGPSProvider));		
@@ -475,42 +525,52 @@ public class GPSTesterActivityController {
 	private static void writeResultToTable(
 			Location location,
 			LocationManager locationManager,
-			String elapsedTimeGPSProvider){
+			String elapsedTimeGPSProvider,
+			Boolean isNetworkAvailable){
 		
     	_gpsLatitude = location.getLatitude();
     	_gpsLongitude = location.getLongitude();
     	_gpsAccuracy = location.getAccuracy();  
     	final double speed = location.getSpeed();
     	final double altitude = location.getAltitude();
+
     	String bestAvailableText = "";
     	
-		boolean networkProviderEnabled = false; 			
+		boolean networkProviderEnabled = false; 	
+		boolean gpsProviderEnabled = false;
 		
 		try{
 			networkProviderEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+			gpsProviderEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 		}
 		catch(Exception exc){
 			Log.d("GPSTester","WriteResultToTable(): " + exc.getMessage());
 		}
-		
-    	if(_networkAccuracy > _gpsAccuracy && _gpsAccuracy > 0.0){
+
+    	if(_networkAccuracy > _gpsAccuracy && _gpsAccuracy > 0.0 && gpsProviderEnabled == true){
     		_bestAvailableType = BestAvailableType.GPS;
     		bestAvailableText = "<b><font color='yellow'>Best Accuracy</font> = <font color='red'>GPS</b></font>" +
-    				"<br><b>GPS Accuracy:</b> " + _gpsAccuracy + " meters" +
+    				"<br><b>GPS Accuracy:</b> " + DECIMAL_FORMAT_4.format(_gpsAccuracy) + " meters" +
     				"<br><b>GPS Lat/Lon:</b> " + _gpsLatitude + ", " + _gpsLongitude;
     	}  	
-    	else if(_gpsAccuracy > _networkAccuracy && networkProviderEnabled == true){
+    	else if(_gpsAccuracy > _networkAccuracy && _networkAccuracy > 0.0 && networkProviderEnabled == true){
     		_bestAvailableType = BestAvailableType.NETWORK;	    		
     		bestAvailableText = "<b><font color='yellow'><b><font color='yellow'>Best Accuracy</font> = <font color='red'>Network</b></font></b></font>" +
-    				"<br><b>Network Accuracy:<b/> " + _networkAccuracy + " meters" +
+    				"<br><b>Network Accuracy:<b/> " + DECIMAL_FORMAT_4.format(_networkAccuracy) + " meters" +
     				"<br><b>Network Lat/Lon:<b/> " + _networkLatitude + ", " + _networkLongitude;
     	}
-    	else if(networkProviderEnabled == false){
+    	else if(_gpsAccuracy == 0.0 && _networkAccuracy > 0.0 && networkProviderEnabled == true){
+    		_bestAvailableType = BestAvailableType.NETWORK;	    		
+    		bestAvailableText = "<b><font color='yellow'><b><font color='yellow'>Best Accuracy</font> = <font color='red'>Network</b></font></b></font>" +
+    				"<br><b>Network Accuracy:<b/> " + DECIMAL_FORMAT_4.format(_networkAccuracy) + " meters" +
+    				"<br><b>Network Lat/Lon:<b/> " + _networkLatitude + ", " + _networkLongitude;    		
+    	}
+    	else if(_networkAccuracy == 0.0 && _gpsAccuracy > 0.0 && gpsProviderEnabled == true){
     		_bestAvailableType = BestAvailableType.GPS;
     		bestAvailableText = "<b><font color='yellow'>Best Accuracy</font> = <font color='red'>GPS</b></font>" +
-    				"<br><b>GPS Accuracy:</b> " + _gpsAccuracy + " meters" +
-    				"<br><b>GPS Lat/Lon:</b> " + _gpsLatitude + ", " + _gpsLongitude;
-    	}	    	
+    				"<br><b>GPS Accuracy:</b> " + DECIMAL_FORMAT_4.format(_gpsAccuracy) + " meters" +
+    				"<br><b>GPS Lat/Lon:</b> " + _gpsLatitude + ", " + _gpsLongitude;    		
+    	}
     	else{
     		_bestAvailableType = BestAvailableType.NULL;
     		bestAvailableText = "<b><font color='yellow'>Best Accuracy = N/A</b></font>" + 
@@ -524,37 +584,41 @@ public class GPSTesterActivityController {
     	_initialGPSTime = _elapsedTimer.getElapsedtime();		
     	
 	  	final String gpsLocationText = "<b><font color='yellow'>GPS Provider</b></font>" +
+    		  	"<br><b>Timestamp:</b> " + _elapsedTimer.convertMillisToMDYHMSS(location.getTime()) +
 				"<br><b>1st update elapsed time:</b> " + elapsedTimeGPSProvider +
 			  	"<br><b>Since last update:</b> " + elapsedTimeSinceLastGPS +
 		  		"<br><b>Lat/Lon:</b> " + _gpsLatitude + ", " + _gpsLongitude +
 		  		"<br><b>DMSS:</b> " + 
 		  			Location.convert(_gpsLatitude, Location.FORMAT_SECONDS) + ", " +					  			
 		  			Location.convert(_gpsLongitude, Location.FORMAT_SECONDS) +
-		  		"<br><b>Accuracy:</b> " + _gpsAccuracy + " meters" +
-		  		"<br><b>Speed:</b> " + _decimalFormat.format((speed * 2.2369)) + " mph" + ", " +
-		  		_decimalFormat.format(((speed * 3600)/1000)) + " km/h" +
-		  		"<br><b>Altitude:</b> " + _decimalFormat.format(altitude) + " m, " +
-		  		_decimalFormat.format(altitude * 3.2808) + " ft" +
+		  		"<br><b>Accuracy:</b> " + DECIMAL_FORMAT_4.format(_gpsAccuracy) + " meters" +
+		  		"<br><b>Speed:</b> " + DECIMAL_FORMAT.format((speed * 2.2369)) + " mph" + ", " +
+		  		DECIMAL_FORMAT.format(((speed * 3600)/1000)) + " km/h" +
+		  		"<br><b>Altitude:</b> " + DECIMAL_FORMAT.format(altitude) + " m, " +
+		  		DECIMAL_FORMAT.format(altitude * 3.2808) + " ft" +
 		  		"<br><b>Bearing:</b> " + location.getBearing() + " deg";				  	
 			  	
     	
 	  	_gpsLocationTextView.setText(Html.fromHtml(gpsLocationText));	  	
     	_bestAvailableInfoTextView.setText(Html.fromHtml(bestAvailableText));
-    	
-		final int redMapGraphicSize = Integer.valueOf(_preferences.getString("pref_key_gpsGraphicSize", "10"));    	
-    	
-    	// Called when a new location is found by the network location provider.
-    	if(_preferences.getBoolean("pref_key_centerOnGPSCoords", true) == true){
-    		_map.centerAt(_gpsLatitude, _gpsLongitude, true);
+    	    	
+    	//If true then we can draw on the map. Offline maps not available in this version
+    	if(isNetworkAvailable == true){
+			final int redMapGraphicSize = Integer.valueOf(_preferences.getString("pref_key_gpsGraphicSize", "10"));    	
+	    	
+	    	// Called when a new location is found by the network location provider.
+	    	if(_preferences.getBoolean("pref_key_centerOnGPSCoords", true) == true){
+	    		_map.centerAt(_gpsLatitude, _gpsLongitude, true);
+	    	}
+	    	if(_preferences.getBoolean("pref_key_accumulateMapPoints", true) == false){
+	    		_map.clearPointsGraphicLayer();
+	    	}
+	    	
+	    	_map.addGraphicLatLon(_gpsLatitude, _gpsLongitude, null, SimpleMarkerSymbol.STYLE.CIRCLE,Color.RED,redMapGraphicSize);
     	}
-    	if(_preferences.getBoolean("pref_key_accumulateMapPoints", true) == false){
-    		_map.clearPointsGraphicLayer();
-    	}
-    	
-    	_map.addGraphicLatLon(_gpsLatitude, _gpsLongitude, null, SimpleMarkerSymbol.STYLE.CIRCLE,Color.RED,redMapGraphicSize);	    	
 	}
 	
-	private void setLocationListenerGPSProvider(){
+	private void setLocationListenerGPSProvider(final Boolean isNetworkAvailable){
 		
 		_locationListenerGPSProvider = new LocationListener() {
 	
@@ -577,7 +641,8 @@ public class GPSTesterActivityController {
 				writeResultToTable(
 						location, 
 						_locationManager, 
-						elapsedTimeGPSProvider);
+						elapsedTimeGPSProvider,
+						isNetworkAvailable);
 		      
 //			    Preferences.setSharedPreferences(
 //			    		PreferenceKey.GPS_LATLON, location.getLatitude() + "," +
@@ -614,8 +679,8 @@ public class GPSTesterActivityController {
 		};
 		
 		try{
-			long minDistance = Long.valueOf(_preferences.getString("pref_key_updateGPSMinDistance", "0"));
-			long minTime = Long.valueOf(_preferences.getString("pref_key_updateGPSMinTime", "0"));
+			final long minDistance = Long.valueOf(_preferences.getString("pref_key_updateGPSMinDistance", "0"));
+			final long minTime = Long.valueOf(_preferences.getString("pref_key_updateGPSMinTime", "0"));
 			
 			// Register the listener with the Location Manager to receive location updates
 			_locationManager.requestLocationUpdates(
@@ -627,7 +692,7 @@ public class GPSTesterActivityController {
 	}
 	
 	private void setLocationListenerNetworkProvider(){
-		
+
 		final int blueMapGraphicSize = Integer.valueOf(_preferences.getString("pref_key_networkGraphicSize", "10"));
 		final boolean centerUsingGPS = _preferences.getBoolean("pref_key_centerOnGPSCoords", true);		
 		final boolean accumlateMapPts = _preferences.getBoolean("pref_key_accumulateMapPoints", true);		
@@ -638,7 +703,6 @@ public class GPSTesterActivityController {
 			String elapsedTimeSinceLastNetworkUpdate = "N/A";
 			String networkLocationText = "";
 			String bestAvailableText = "";		
-			boolean initialLapNetwork = true;	
 			
 		    public void onLocationChanged(Location location) {
 		    	
@@ -657,14 +721,14 @@ public class GPSTesterActivityController {
 		    	
 		    	if(_networkAccuracy > _gpsAccuracy && _gpsAccuracy > 0.0 && gpsProviderEnabled == true){
 		    		bestAvailableText = "<b><font color='yellow'>Best Accuracy</font> = <font color='red'>GPS</b></font>" +
-		    				"<br><b>GPS Accuracy:</b> " + _gpsAccuracy + " meters" +
+		    				"<br><b>GPS Accuracy:</b> " + DECIMAL_FORMAT_4.format(_gpsAccuracy) + " meters" +
 		    				"<br><b>GPS Lat/Lon:</b> " + _gpsLatitude + ", " + _gpsLongitude;
 		    		
 		    		setBestAvailableImageView(BestAvailableType.GPS);
 		    	}
 		    	else{
 		    		bestAvailableText = "<b><font color='yellow'>Best Accuracy</font> = <font color='red'>Network</b></font>" +
-		    				"<br><b>Network Accuracy:<b/> " + _networkAccuracy + " meters" +
+		    				"<br><b>Network Accuracy:<b/> " + DECIMAL_FORMAT_4.format(_networkAccuracy) + " meters" +
 		    				"<br><b>Network Lat/Lon:<b/> " + _networkLatitude + ", " + _networkLongitude;
 		    		
 		    		setBestAvailableImageView(BestAvailableType.NETWORK);		    		
@@ -701,16 +765,17 @@ public class GPSTesterActivityController {
 		    	  elapsedTimeSinceLastNetworkUpdate = _elapsedTimer.calculateTimeDifference(_initialNetworkTime, _finalNetworkTime);
 		    	  _initialNetworkTime = _elapsedTimer.getElapsedtime();		    	  
 		      }
-		      
+
 		      // Called when a new location is found by the network location provider.
 		      networkLocationText = "<b><font color='yellow'>Network Provider</b></font>" + 
+		    		  	"<br><b>Timestamp:</b> " + _elapsedTimer.convertMillisToMDYHMSS(location.getTime()) +
 		    		  	"<br><b>1st update elapsed time:</b> " + elapsedTimeNetworkProvider +
 		    		  	"<br><b>Since last update:</b> " + elapsedTimeSinceLastNetworkUpdate +
 		    		  	"<br><b>Lat/Lon:</b> " + _networkLatitude + ", " + _networkLongitude +
 				  		"<br><b>DMSS:</b> " + 
 				  			Location.convert(_networkLatitude, Location.FORMAT_SECONDS) + ", " +					  			
 				  			Location.convert(_networkLongitude, Location.FORMAT_SECONDS) +						
-						"<br><b>Accuracy:</b> " + _networkAccuracy + " meters";	
+						"<br><b>Accuracy:</b> " + DECIMAL_FORMAT_4.format(_networkAccuracy) + " meters";	
 		      
 		      _networkLocationTextView.setText(Html.fromHtml(networkLocationText));
 		      
@@ -767,8 +832,6 @@ public class GPSTesterActivityController {
 	 */	
 	public void delayedStartCachedLocationProviders(){
 		
-		final Handler handler = new Handler();
-		
 		Runnable task = new Runnable() {
 
 			int counter = 0;
@@ -781,28 +844,29 @@ public class GPSTesterActivityController {
 						
 				try{ 
 					boolean test = _map.isMapLoaded();
+					Boolean mapLoaded = _map.layerExists(MapType.TOPO);		
 					Log.d("GPSTester","delayedStartCachedLocationProviders(): Testing if layer is loaded. Attempt #" + counter);
-					if(test == true){
+					if(test == true 
+							&& mapLoaded == true 
+							&& _lastKnownLocationGPSProvider != null 
+							&& _lastKnownLocationNetworkProvider != null){
 						
-						Log.d("GPSTester","delayedStartCachedLocationProviders(): map is loaded.");
-						Boolean mapLoaded = _map.layerExists(MapType.TOPO);															
-						
-						if(mapLoaded == true && _lastKnownLocationGPSProvider != null && _lastKnownLocationNetworkProvider != null){			
+						Log.d("GPSTester","delayedStartCachedLocationProviders(): map is loaded.");														
 							//Run results back on the UI thread
-							handler.post(mDelayedStartUpdateResultsOnUI);
-						}
+						_map.post(mDelayedStartUpdateResultsOnUI);
+
 					}
 					else if (counter < 5){
-							handler.postDelayed(this, 5000);
+							handler.postDelayed(this, 3000);
 					}
 					else{
 						Log.d("GPSTester","delayedStartCachedLocationProviders(): Unable to start Location Listener.");
 						//Run Toast on UI thread
-						handler.post(new Runnable() {
+						_map.post(new Runnable() {
 							
 							@Override
 							public void run() {
-								_map.displayToast("Map not loading? Try restarting app.", Toast.LENGTH_LONG);									
+								_map.displayToast("Map not loading? Check internet connection.", Toast.LENGTH_LONG);									
 							}
 						});						
 					}
@@ -855,72 +919,81 @@ public class GPSTesterActivityController {
 	 * Uses a Runnable to check at intervals until the base map has fully initialized. 
 	 * Fails if an initialized map is not detected after 5 tries. Map has to be loaded in 
 	 * order to manipulate it and draw graphics on it.
-	 * @param startGPS if you set this to false it will attempt to start Network Listeners. 
+	 * @param startOptions True starts GPS. False attempts to start Network Listeners. Null will start both. 
 	 */	
-	public void delayedStartLocationProvider(final Boolean startGPS){
+	public void delayedStartLocationProvider(final Boolean startOptions, final Boolean isNetworkAvailable){
 		
-		final Handler handler = new Handler();
-		
-		Runnable task = new Runnable() {
-
-			int counter = 0;
-			final Handler handler = new Handler();
+		//If the network isn't available we can't use the map offline in this version
+		if(isNetworkAvailable == false){
 			
-			@Override
-			public void run() {
-				// TODO Auto-generated method stub
-
-				//final Handler handler = new Handler();
-				counter++;
-				
-				try{ 
-					boolean test = _map.isMapLoaded();
-					Log.d("GPSTester","delayedStartLocationProvider(): Testing if layer is loaded. Attempt #" + counter);
-					if(test == true){
-						
-						Log.d("GPSTester","delayedStartLocationProvider(): map is loaded.");
-						
-						//Switch back to running the following methods on the UI thread
-						handler.post(new Runnable() {
-							
-							@Override
-							public void run() {
-								if(startGPS == null){
-									setLocationListenerGPSProvider();
-									setLocationListenerNetworkProvider();
-								}
-								else if(startGPS == true){
-									setLocationListenerGPSProvider();
-								}
-								else{
-									setLocationListenerNetworkProvider();
-								}
-							}
-						});									
-					}
-					else if (counter < 5){
-						handler.postDelayed(this, 5000);
-					}
-					else{
-						Log.d("GPSTester","delayedStartLocationProvider(): Unable to start Location Listener.");
-						//Display toast on the UI thread
-						handler.post(new Runnable() {
-							
-							@Override
-							public void run() {
-								_map.displayToast("Map not loading? Try restarting app.", Toast.LENGTH_LONG);									
-							}
-						});	
-					}						
-				}
-				catch(Exception exc){
-					Log.d("GPSTester","centerAndZoomIfMapLoaded() exception: " + exc.toString());
-				}
+			if(startOptions == null);
+			if(startOptions == true){
+				setLocationListenerGPSProvider(false);
 			}
-		};
+		}		
+		else{
 		
-		Thread thread = new Thread(task);
-		thread.start();
+			Runnable task = new Runnable() {
+	
+				int counter = 0;
+				final Handler handler = new Handler();
+				
+				@Override
+				public void run() {
+	
+					counter++;
+	
+					try{ 
+						boolean test = _map.isMapLoaded(); 
+						Log.d("GPSTester","delayedStartLocationProvider(): Testing if layer is loaded. Attempt #" + counter);
+						if(test == true){
+							
+							Log.d("GPSTester","delayedStartLocationProvider(): map is loaded.");
+							
+							//Switch back to running the following methods on the UI thread
+							handler.post(new Runnable() {
+								
+								@Override
+								public void run() {
+									if(startOptions == null){
+										setLocationListenerGPSProvider(true);
+										setLocationListenerNetworkProvider();
+									}
+									else if(startOptions == true){
+										setLocationListenerGPSProvider(true);
+									}
+									else{
+										setLocationListenerNetworkProvider();
+									}
+								}
+							});									
+						}
+						else if (counter < 5){
+							handler.postDelayed(this, 3000);
+						}
+						else{
+							Log.d("GPSTester","delayedStartLocationProvider(): Unable to start Location Listener.");
+	
+							//Display toast on the UI thread
+							_map.post(new Runnable() {
+								
+								@Override
+								public void run() {
+									_map.displayToast("Map not loading? Check internet connection.", Toast.LENGTH_LONG);									
+								}
+							});	
+						}						
+					}
+					catch(Exception exc){
+						Log.d("GPSTester","centerAndZoomIfMapLoaded() exception: " + exc.toString());
+					}
+	
+				}
+			};
+			
+			Thread thread = new Thread(task);
+			thread.start();
+		}
 	}
 	
 	/**
@@ -938,16 +1011,16 @@ public class GPSTesterActivityController {
 			_elapsedTimer.startTimer(1,_elapsedTime);
 			_initialGPSTime = _elapsedTimer.getElapsedtime();
 			_initialNetworkTime = _elapsedTimer.getElapsedtime();
-			_locationManager = (LocationManager) _activity.getSystemService(Context.LOCATION_SERVICE);			
-			
-			//GpsStatus gpsStatus = new GpsStatus();
-			//int time = gpsStatus.getTimeToFirstFix();
-			Boolean gpsProviderEnabled = _locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-			Boolean networkProviderEnabled = _locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-			
-		    //boolean useCriteria = Boolean.valueOf(_preferences.getString("pref_key_useCriteria", "false"));
-		    Boolean useCriteria = _preferences.getBoolean("pref_key_useCriteria", false);
-		    String bestProviderName = getBestProviderNameViaCriteria();			
+			_locationManager = (LocationManager) _activity.getSystemService(Context.LOCATION_SERVICE);
+						
+			final Boolean gpsProviderEnabled = _locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+			final Boolean networkProviderEnabled = _locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+			final Boolean gpsPreferences = _preferences.getBoolean("pref_key_gps", true);
+			final Boolean networkPreferences = _preferences.getBoolean("pref_key_network", true);
+		    final Boolean useCriteria = _preferences.getBoolean("pref_key_useCriteria", false);		
+			//Check network availability on startup. This version of the app cannot use maps offline
+			final Boolean isNetworkAvailable = CheckConnectivity.checkNow(_activity.getApplicationContext());
+			final DialogFragment networkFragment = new NetworkAlertDialogFragment();
 			
 		    if(useCriteria == true){
 		    	_imCriteria.setImageResource(R.drawable.greensphere31);
@@ -956,72 +1029,77 @@ public class GPSTesterActivityController {
 		    	_imCriteria.setImageResource(R.drawable.redsphere31);
 		    }
 		    
-			setUI();
-			setLocationManagerUI(gpsProviderEnabled,networkProviderEnabled);			
+			setMapListeners();
+		    setUI();
+			setLocationManagerUI(gpsProviderEnabled,networkProviderEnabled);		
 			
-			if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == true &&
-					networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == true){
-				Log.d("GPSTester","Startup: GPS enabled true. GPS prefs true. Network enabled. Network Prefs true");
-				delayedStartLocationProvider(null);					
-			
-				_imGPS.setImageResource(R.drawable.greensphere31);	
-				_imNetwork.setImageResource(R.drawable.greensphere31);	
-			}
-			else if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == true &&
-					networkProviderEnabled == false){
-				Log.d("GPSTester","Startup: GPS enabled true. GPS prefs true. Network not enabled.");
-				delayedStartLocationProvider(true);
+			if(gpsProviderEnabled == true && gpsPreferences == true){
 				
-				_imGPS.setImageResource(R.drawable.greensphere31);	
-				_imNetwork.setImageResource(R.drawable.redsphere31);
-				_map.displayToast("No network connection available.", Toast.LENGTH_LONG);
+				if(networkProviderEnabled == true && networkPreferences == true && isNetworkAvailable == true){					
+					Log.d("GPSTester","Startup: GPS enabled true. GPS prefs true. Network enabled. Network Prefs true");
+					delayedStartLocationProvider(null,true);					
+				
+					_imGPS.setImageResource(R.drawable.greensphere31);	
+					_imNetwork.setImageResource(R.drawable.greensphere31);						
+				}
+				else{
+					Log.d("GPSTester","Startup: GPS enabled true. GPS prefs true. Network not enabled.");
+					delayedStartLocationProvider(true,false);
+					
+					_imGPS.setImageResource(R.drawable.greensphere31);	
+					_imNetwork.setImageResource(R.drawable.redsphere31);
+					_map.displayToast("No network connection available.", Toast.LENGTH_LONG);
+					
+					//Inflate alert dialog
+					networkFragment.show(_activity.getFragmentManager(), "NetworkAlert");
+				}
 			}
-			else if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == false &&
-					networkProviderEnabled == false){
-				Log.d("GPSTester","Startup: GPS enabled true. GPS prefs false. Network not enabled.");					
-				_imGPS.setImageResource(R.drawable.redsphere31);	
-				_imNetwork.setImageResource(R.drawable.redsphere31);
-				_map.displayToast("No network connection available.", Toast.LENGTH_LONG);
+			else if(gpsProviderEnabled == true && gpsPreferences == false){
+				
+				if(networkProviderEnabled == true && networkPreferences == true && isNetworkAvailable == true){
+					Log.d("GPSTester","Startup: GPS enabled. GPS prefs false. Network enabled. Network Prefs true ");
+					delayedStartLocationProvider(false,true);
+					
+					_imGPS.setImageResource(R.drawable.redsphere31);
+					_imNetwork.setImageResource(R.drawable.greensphere31);					
+				}
+				else{
+					Log.d("GPSTester","Startup: GPS enabled true. GPS prefs false. Network not enabled.");					
+					_imGPS.setImageResource(R.drawable.redsphere31);	
+					_imNetwork.setImageResource(R.drawable.redsphere31);
+					_map.displayToast("No network connection available.", Toast.LENGTH_LONG);
+					
+					//Inflate alert dialog
+					networkFragment.show(_activity.getFragmentManager(), "NetworkAlert");					
+				}				
 			}						
-			else if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == false &&
-					networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == true){
-				Log.d("GPSTester","Startup: GPS enabled. GPS prefs false. Network enabled. Network Prefs true ");
-				delayedStartLocationProvider(false);
+
+			else if(gpsProviderEnabled == false){
 				
-				_imGPS.setImageResource(R.drawable.redsphere31);
-				_imNetwork.setImageResource(R.drawable.greensphere31);				
-			}
-			else if(gpsProviderEnabled == false && 
-					networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == true){
-				Log.d("GPSTester","Startup: GPS not enabled. Network enabled. Network Prefs true.");
-				delayedStartLocationProvider(false);
+				if(networkProviderEnabled == true && networkPreferences == true && isNetworkAvailable == true){
+					Log.d("GPSTester","Startup: GPS not enabled. Network enabled. Network Prefs true.");
+					delayedStartLocationProvider(false,true);
+					
+					_imGPS.setImageResource(R.drawable.redsphere31);
+					_imNetwork.setImageResource(R.drawable.greensphere31);					
+				}
+				else if(networkProviderEnabled == true && networkPreferences == false){
+					Log.d("GPSTester","Startup: GPS not enabled. Network enabled. Network Prefs false.");
+					_imGPS.setImageResource(R.drawable.redsphere31);
+					_imNetwork.setImageResource(R.drawable.redsphere31);	
+					networkFragment.show(_activity.getFragmentManager(), "NetworkAlert");
+				}				
+				else{
+					Log.d("GPSTester","Startup: check your GPS and network settings.");
+					_imGPS.setImageResource(R.drawable.redsphere31);
+					_imNetwork.setImageResource(R.drawable.redsphere31);	
+					networkFragment.show(_activity.getFragmentManager(), "NetworkAlert");
+				}				
 				
-				_imGPS.setImageResource(R.drawable.redsphere31);
-				_imNetwork.setImageResource(R.drawable.greensphere31);	
-	
 				//Inflate alert dialog
 				DialogFragment gpsFragment = new GPSAlertDialogFragment();
 				gpsFragment.show(_activity.getFragmentManager(), "GPSAlert");
 			}
-			else if(gpsProviderEnabled == false && 
-					networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == false){
-				Log.d("GPSTester","Startup: GPS not enabled. Network enabled. Network Prefs false.");
-				_imGPS.setImageResource(R.drawable.redsphere31);
-				_imNetwork.setImageResource(R.drawable.redsphere31);	
-	
-				//Inflate alert dialog
-				DialogFragment gpsFragment = new GPSAlertDialogFragment();
-				gpsFragment.show(_activity.getFragmentManager(), "GPSAlert");
-			}
-			
-			else{
-				Log.d("GPSTester","Startup: check your GPS and network settings.");
-				_imGPS.setImageResource(R.drawable.redsphere31);
-				_imNetwork.setImageResource(R.drawable.redsphere31);	
-			}
-						
-			gpsProviderEnabled = null;
-			networkProviderEnabled = null;
 		}
 	}
 	
@@ -1088,18 +1166,20 @@ public class GPSTesterActivityController {
 			
 			//GpsStatus gpsStatus = new GpsStatus();
 			//int time = gpsStatus.getTimeToFirstFix();
-			Boolean gpsProviderEnabled = _locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-			Boolean networkProviderEnabled = _locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+			final Boolean gpsProviderEnabled = _locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+			final Boolean networkProviderEnabled = _locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+			final Boolean isNetworkAvailable = CheckConnectivity.checkNow(_activity.getApplicationContext());			
 							
 			if(gpsProviderEnabled == true && _preferences.getBoolean("pref_key_gps", true) == true){
-				setLocationListenerGPSProvider();				
+				setLocationListenerGPSProvider(isNetworkAvailable);				
 				_imGPS.setImageResource(R.drawable.greensphere31);				
 			}
 			else{
 				Log.d("GPSTester","GPS Provider not enabled. Unable to set location listener.");
 				_imGPS.setImageResource(R.drawable.redsphere31);				
 			}
-			if(networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == true){
+			if(networkProviderEnabled == true && _preferences.getBoolean("pref_key_network", true) == true 
+					&& isNetworkAvailable == true){
 				setLocationListenerNetworkProvider();	
 				_imNetwork.setImageResource(R.drawable.greensphere31);					
 			}
@@ -1107,9 +1187,6 @@ public class GPSTesterActivityController {
 				Log.d("GPSTester","Network Provider not enabled. Unable to set location listener.");
 				_imNetwork.setImageResource(R.drawable.redsphere31);					
 			}				
-			
-			gpsProviderEnabled = null;
-			networkProviderEnabled = null; 
 		}
 		
 	}
