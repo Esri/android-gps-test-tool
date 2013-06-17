@@ -13,6 +13,11 @@ More information on using the tool and working with Android geolocation capabili
 
 [How accurate is Android GPS? Part 2 - consuming real-time locations](http://www.andygup.net/?p=1125)
 
+## Getting Started with Eclipse
+
+New at v1.3 are some directions on how to get started if you are using Eclipse or the ADT Bundle. Click [here](https://github.com/Esri/android-gps-test-tool/wiki) to go to the wiki.
+
+## Screen shots
 
 Main View:
 
