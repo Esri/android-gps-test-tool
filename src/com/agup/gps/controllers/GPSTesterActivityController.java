@@ -24,6 +24,7 @@ import android.text.Html;
 import android.util.Log;
 import android.view.Display;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -247,6 +248,9 @@ public class GPSTesterActivityController {
 		final MapView temp = (MapView)_activity.findViewById(R.id.map);
 		temp.setLayoutParams(layoutParams);
 		
+		//Keep screen awake
+		_activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		
 		//Load the map
 		if(_map.layerExists(MapType.TOPO)){
 			_map.clearAllGraphics(); 
@@ -261,7 +265,7 @@ public class GPSTesterActivityController {
 		
   		setBestAvailableImageView(BestAvailableType.NULL);
 		
-		cachedLocationNetworkProviderText = "<b><font color='yellow'>Cached Location Provider</b></font>" + 
+		cachedLocationNetworkProviderText = "<b><font color='yellow'>Cached Network Provider</b></font>" + 
 				"<br><b>Lat/Lon:</b> N/A" +  
 				"<br><b>Accuracy:</b> N/A";
 		
@@ -345,17 +349,22 @@ public class GPSTesterActivityController {
 		catch(Exception exc){
 			Log.d("GPSTester","setLocationManagerUI() " + exc.toString());
 		}
+		
+		if(_lastKnownLocationNetworkProvider != null){
+			_cachedNetworkAccuracy = _lastKnownLocationNetworkProvider.getAccuracy();
+			_cachedNetworkLatitude = _lastKnownLocationNetworkProvider.getLatitude();
+			_cachedNetworkLongitude = _lastKnownLocationNetworkProvider.getLongitude();	
+		}
+		if(_lastKnownLocationGPSProvider != null){
+			_cachedGPSLatitude = _lastKnownLocationGPSProvider.getLatitude();
+			_cachedGPSLongitude = _lastKnownLocationGPSProvider.getLongitude();
+			_cachedGPSAccuracy = _lastKnownLocationGPSProvider.getAccuracy();
+		}
 	
 		//NOTE: This does not take into account if _cachedGPSTime == _cachedNetworkTime
 		//The changes of that happening are small.
 		if(_lastKnownLocationGPSProvider != null && _lastKnownLocationNetworkProvider != null){
-			
-			_cachedGPSLatitude = _lastKnownLocationGPSProvider.getLatitude();
-			_cachedGPSLongitude = _lastKnownLocationGPSProvider.getLongitude();
-			_cachedGPSAccuracy = _lastKnownLocationGPSProvider.getAccuracy();
-			_cachedNetworkLatitude = _lastKnownLocationNetworkProvider.getLatitude();
-			_cachedNetworkLongitude = _lastKnownLocationNetworkProvider.getLongitude();	
-			_cachedNetworkAccuracy = _lastKnownLocationNetworkProvider.getAccuracy();
+
 			long cachedGPSTime = _lastKnownLocationGPSProvider.getTime();		
 			long cachedNetworkTime = _lastKnownLocationNetworkProvider.getTime();			
 			
@@ -369,8 +378,8 @@ public class GPSTesterActivityController {
 	    	}  
 	    	else if(cachedNetworkTime > cachedGPSTime && _cachedGPSAccuracy != 0.0){
 	    		bestAvailableText = "<b><font color='yellow'>Most Recent Accuracy</font> = <font color='red'>Cached Network</b></font>" +
-	    				"<br><b>GPS Accuracy:</b> " + DECIMAL_FORMAT_4.format(_cachedNetworkAccuracy) + " meters" +
-	    				"<br><b>GPS Lat/Lon:</b> " + _cachedNetworkLatitude + ", " + _cachedNetworkLongitude;
+	    				"<br><b>Network Accuracy:</b> " + DECIMAL_FORMAT_4.format(_cachedNetworkAccuracy) + " meters" +
+	    				"<br><b>Network Lat/Lon:</b> " + _cachedNetworkLatitude + ", " + _cachedNetworkLongitude;
 				setBestAvailableImageView(BestAvailableType.CACHED_NETWORK);	    		
 	    	} 	    	    	
 	    	else{
@@ -421,11 +430,41 @@ public class GPSTesterActivityController {
 			  			Location.convert(_cachedNetworkLatitude, Location.FORMAT_SECONDS) + ", " +					  			
 			  			Location.convert(_cachedNetworkLongitude, Location.FORMAT_SECONDS) +					
 					"<br><b>Accuracy:</b> " + DECIMAL_FORMAT_4.format(_cachedNetworkAccuracy) + " meters";				
-		}				
+		}
 		else{
 			cachedLocationNetworkProvider = "<b><font color='yellow'>Cached Network Provider</font></b>" + 
 					"<br><b>Lat/Lon:</b> N/A" + 
-					"<br><b>Accuracy:</b> N/A";				
+					"<br><b>Accuracy:</b> N/A";	
+		}
+		
+		if(_lastKnownLocationGPSProvider == null && _lastKnownLocationNetworkProvider != null){			
+			
+			String bestAvailableText = "";	
+				    	 
+    		bestAvailableText = "<b><font color='yellow'>Most Recent Accuracy</font> = <font color='red'>Cached Network</b></font>" +
+    				"<br><b>Network Accuracy:</b> " + DECIMAL_FORMAT_4.format(_cachedNetworkAccuracy) + " meters" +
+    				"<br><b>Network Lat/Lon:</b> " + _cachedNetworkLatitude + ", " + _cachedNetworkLongitude;
+			setBestAvailableImageView(BestAvailableType.CACHED_NETWORK);	    		
+		
+	    	_bestAvailableInfoTextView.setText(Html.fromHtml(bestAvailableText));	    	
+	    		    	
+	    	delayedStartCachedLocationProviders();
+			
+		}
+
+		if(_lastKnownLocationGPSProvider != null && _lastKnownLocationNetworkProvider == null){			
+			
+			String bestAvailableText = "";	
+				    	 
+    		bestAvailableText = "<b><font color='yellow'>Most Recent Accuracy</font> = <font color='red'>Cached GPS</b></font>" +
+    				"<br><b>GPS Accuracy:</b> " + DECIMAL_FORMAT_4.format(_cachedGPSAccuracy) + " meters" +
+    				"<br><b>GPS Lat/Lon:</b> " + _cachedGPSLatitude + ", " + _cachedGPSLongitude;
+			setBestAvailableImageView(BestAvailableType.CACHED_GPS);		    		
+		
+	    	_bestAvailableInfoTextView.setText(Html.fromHtml(bestAvailableText));	    	
+	    		    	
+	    	delayedStartCachedLocationProviders();
+			
 		}
 		
 		_cachedLocationNetworkProvider.setText(Html.fromHtml(cachedLocationNetworkProvider));
@@ -848,8 +887,8 @@ public class GPSTesterActivityController {
 					Log.d("GPSTester","delayedStartCachedLocationProviders(): Testing if layer is loaded. Attempt #" + counter);
 					if(test == true 
 							&& mapLoaded == true 
-							&& _lastKnownLocationGPSProvider != null 
-							&& _lastKnownLocationNetworkProvider != null){
+							&& (_lastKnownLocationGPSProvider != null 
+							|| _lastKnownLocationNetworkProvider != null)){
 						
 						Log.d("GPSTester","delayedStartCachedLocationProviders(): map is loaded.");														
 							//Run results back on the UI thread
@@ -889,29 +928,42 @@ public class GPSTesterActivityController {
 			
 			final boolean centerUsingGPS = _preferences.getBoolean("pref_key_centerOnGPSCoords", true);	
 			
-			if(centerUsingGPS == false){
+			if(centerUsingGPS == false && _cachedNetworkLatitude != 0.0 && _cachedNetworkLongitude != 0.0){
 				_map.centerAt(_cachedNetworkLatitude, _cachedNetworkLongitude, 4500.0, true);
+				
+		    	//Add Network location to map and give it a unique symbol
+				_map.addGraphicLatLon(
+						_cachedNetworkLatitude,
+						_cachedNetworkLongitude, 
+		    			null, 
+		    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.GREEN,
+		    			15);
+			}
+			else if(_cachedGPSLatitude == 0.0 && _cachedGPSLongitude == 0.0 && _cachedNetworkLatitude != 0.0 && _cachedNetworkLongitude != 0.0){
+				_map.centerAt(_cachedNetworkLatitude, _cachedNetworkLongitude, 4500.0, true);
+				
+		    	//Add Network location to map and give it a unique symbol
+				_map.addGraphicLatLon(
+						_cachedNetworkLatitude,
+						_cachedNetworkLongitude, 
+		    			null, 
+		    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.GREEN,
+		    			15);
+			}
+			else if(_cachedGPSLatitude != 0.0 && _cachedGPSLongitude != 0.0){
+	    		_map.centerAt(_cachedGPSLatitude, _cachedGPSLongitude, 4500.0, true);
+	    		
+		    	//Add GPS location to the map and give it a unique symbol
+				_map.addGraphicLatLon(
+						_cachedGPSLatitude, 
+						_cachedGPSLongitude, 
+		    			null, 
+		    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.RED,
+		    			15);	
 			}
 			else{
-	    		_map.centerAt(_cachedGPSLatitude, _cachedGPSLongitude, 4500.0, true);
+				Log.d("GPSTester", "mDelayedStartUpdateResultsOnUI: no valid locations found.");
 			}
-			
-	    	//Add Network location to map and give it a unique symbol
-			_map.addGraphicLatLon(
-					_cachedNetworkLatitude,
-					_cachedNetworkLongitude, 
-	    			null, 
-	    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.GREEN,
-	    			15);		
-			
-	    	//Add GPS location to the map and give it a unique symbol
-			_map.addGraphicLatLon(
-					_cachedGPSLatitude, 
-					_cachedGPSLongitude, 
-	    			null, 
-	    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.RED,
-	    			15);					
-			
 		}
 	};	
 	

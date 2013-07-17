@@ -1,5 +1,10 @@
 # GPSTester - Changelog
 
+## Version 1.4 - July 17, 2013
+- Fixed issues #10, #11 and #12.
+- Added functionality to keep screen turned on while application is visible.
+- Built and tested app against ArcGIS SDK for Android v10.1.1 Update 1.
+
 ## Version 1.3 - June 11, 2013
 - Tested app to work with EsriQuickStart v1.2.1 
 - Internal: Updated SettingsActivity to include a PreferenceFragment.

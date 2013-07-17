@@ -15,7 +15,7 @@ More information on using the tool and working with Android geolocation capabili
 
 ## Getting Started with Eclipse
 
-New at v1.3 are some directions on how to get started if you are using Eclipse or the ADT Bundle. Click [here](https://github.com/Esri/android-gps-test-tool/wiki) to go to the wiki.
+Click [here](https://github.com/Esri/android-gps-test-tool/wiki) for directions on getting started with Eclipse or the ADT Bundle.
 
 ## Screen shots
 
@@ -52,7 +52,7 @@ Click [here](http://resources.arcgis.com/en/help/android-sdk/concepts/0119/01190
 
 * [ArcGIS Runtime SDK for Android Resource Center](http://resources.arcgis.com/en/communities/runtime-android/)
 * [ArcGIS Blog](http://blogs.esri.com/esri/arcgis/)
-* [twitter@esri](http://twitter.com/esri)
+* Twitter [@esri](http://twitter.com/esri)
 
 ## Issues
 
@@ -63,7 +63,7 @@ Find a bug or want to request a new feature?  Please let us know by submitting a
 Anyone and everyone is welcome to contribute. 
 
 ## Licensing
-Copyright 2012 Esri
+Copyright 2013 Esri
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

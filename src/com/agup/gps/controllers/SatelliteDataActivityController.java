@@ -26,6 +26,7 @@ import android.preference.PreferenceManager;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -81,6 +82,10 @@ public class SatelliteDataActivityController {
 	}
 	
 	private void setUI(){
+		
+		//Keep screen awake
+		_activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+		
 		String gpsNMEAText = "<b><font color='yellow'>GPS NMEA</b></font>" + 
 				"<br><b>Timestamp:</b> N/A" + 
 				"<br><b>NMEA code:</b> N/A";			
