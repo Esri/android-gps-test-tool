@@ -8,15 +8,19 @@ import java.util.List;
 
 import android.app.Activity;
 import android.app.DialogFragment;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -135,14 +139,31 @@ public class GPSTesterActivityController {
 		_imCriteria = (ImageView) _activity.findViewById(R.id.criteriaEnabledIcon);
 
 		//setUI();
-		setOnClickListeners();		
-
+		setOnClickListeners();	
+		context.registerReceiver(connectivityReceiver,new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+		
 		//This is very expensive to run - but hey if you need it...it's here.
 		//My recommendation is move it off the UI thread and put it on a timer.
 //    	String cpu = Float.toString(getCPU() * 100);
 //    	Log.d("GPSTester","CPU usage: " + cpu);
 				
 	}
+	
+	private BroadcastReceiver connectivityReceiver = new BroadcastReceiver() {
+		
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			final Boolean isNetworkAvailable = CheckConnectivity.checkNow(context.getApplicationContext());	
+			if(isNetworkAvailable == true){
+				_imNetwork.setImageResource(R.drawable.greensphere31);
+				startNetworkLocation();
+			}
+			else{
+				_imNetwork.setImageResource(R.drawable.redsphere31);
+				stopNetworkLocation();
+			}
+		}
+	};
 	
 	private void setOnClickListeners(){
 		
@@ -1155,10 +1176,44 @@ public class GPSTesterActivityController {
 		}
 	}
 	
+	private void stopNetworkLocation(){
+		if(_locationManager != null){
+			if(_locationListenerNetworkProvider != null){
+				_locationManager.removeUpdates(_locationListenerNetworkProvider);
+			}
+		}
+	}
+	
+	private void startNetworkLocation(){
+		final Boolean networkProviderEnabled = _locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+		final Boolean networkPreferences = _preferences.getBoolean("pref_key_network", true);	
+		//Check network availability on startup. This version of the app cannot use maps offline
+		final Boolean isNetworkAvailable = CheckConnectivity.checkNow(_activity.getApplicationContext());
+		final DialogFragment networkFragment = new NetworkAlertDialogFragment();
+		
+		if(networkProviderEnabled == true && networkPreferences == true && isNetworkAvailable == true){
+			Log.d("GPSTester","Startup: GPS not enabled. Network enabled. Network Prefs true.");
+			delayedStartLocationProvider(false,true);
+			
+			_imNetwork.setImageResource(R.drawable.greensphere31);					
+		}
+		else if(networkProviderEnabled == true && networkPreferences == false){
+			Log.d("GPSTester","Startup: GPS not enabled. Network enabled. Network Prefs false.");
+			_imNetwork.setImageResource(R.drawable.redsphere31);	
+			networkFragment.show(_activity.getFragmentManager(), "NetworkAlert");
+		}				
+		else{
+			Log.d("GPSTester","Startup: check your GPS and network settings.");
+			_imNetwork.setImageResource(R.drawable.redsphere31);	
+			networkFragment.show(_activity.getFragmentManager(), "NetworkAlert");
+		}
+	}
+	
 	public void stopLocation(){
 
 		if(_locationManager != null){
 			if(_startButton != null){
+				//int color = _pauseButton.getTextColors().getDefaultColor();
 				_startButton.setTextColor(Color.WHITE);
 				_startButton.setText("Start");
 			}			

@@ -1,5 +1,8 @@
 # GPSTester - Changelog
 
+## Version 1.4.1 - July 18, 2013
+- App now detects when internet connection goes off and back on.
+
 ## Version 1.4 - July 17, 2013
 - Fixed issues #10, #11 and #12.
 - Added functionality to keep screen turned on while application is visible.
