@@ -1,8 +1,5 @@
 package com.agup.gps;
 
-import com.agup.gps.controllers.GPSTesterActivityController;
-import com.esri.quickstart.EsriQuickStart;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,8 +9,9 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
+
+import com.agup.gps.controllers.GPSTesterActivityController;
+import com.esri.quickstart.EsriQuickStart;
 
 public class GPSTesterActivity extends Activity {
 	
@@ -29,10 +27,10 @@ public class GPSTesterActivity extends Activity {
 
 		_map = new EsriQuickStart(this,R.id.map);
 		
-		_activityController = new GPSTesterActivityController(this,getApplicationContext(),_map);	
+		_activityController = new GPSTesterActivityController(this,GPSTesterActivity.this,_map);	
 		
 		_preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		PreferenceManager.setDefaultValues(this,R.xml.preferences , false);
+		PreferenceManager.setDefaultValues(this,R.xml.preferences , false);			
 		
     }
     
@@ -68,7 +66,9 @@ public class GPSTesterActivity extends Activity {
 	
 	@Override
 	protected void onPause() {
-		_activityController.stopLocation();
+		if(_activityController != null){
+			_activityController.stopLocation();
+		}
 		_map.pause();
 		super.onPause();
 	}
@@ -76,7 +76,9 @@ public class GPSTesterActivity extends Activity {
 	@Override
 	protected void onStop(){
 		super.onStop();
-		_activityController.stopLocation();
+		if(_activityController != null){
+			_activityController.stopLocation();
+		}
 	}
 	
 	@Override 	

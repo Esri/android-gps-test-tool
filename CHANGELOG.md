@@ -1,5 +1,8 @@
 # GPSTester - Changelog
 
+## Version 1.4.2 - November 5, 2013
+Updated to work with ArcGIS SDK for Android v10.2
+
 ## Version 1.4.1 - July 18, 2013
 - App now detects when internet connection goes off and back on.
 
