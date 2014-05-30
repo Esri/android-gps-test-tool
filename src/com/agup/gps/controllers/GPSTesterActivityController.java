@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.Map;
 
 import android.app.Activity;
 import android.app.DialogFragment;
@@ -13,7 +14,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
@@ -43,14 +43,18 @@ import com.agup.gps.fragments.GPSAlertDialogFragment;
 import com.agup.gps.fragments.NetworkAlertDialogFragment;
 import com.agup.gps.utils.CheckConnectivity;
 import com.agup.gps.utils.ElapsedTimer;
+import com.esri.android.map.GraphicsLayer;
+import com.esri.android.map.Layer;
 import com.esri.android.map.MapView;
+import com.esri.android.map.ags.ArcGISLayerInfo;
+import com.esri.android.map.ags.ArcGISTiledMapServiceLayer;
+import com.esri.core.geometry.GeometryEngine;
+import com.esri.core.geometry.Point;
+import com.esri.core.geometry.SpatialReference;
+import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleMarkerSymbol;
-import com.esri.core.tasks.ags.geocode.LocatorGeocodeResult;
-import com.esri.core.tasks.ags.geocode.LocatorReverseGeocodeResult;
-import com.esri.quickstart.EsriQuickStart;
-import com.esri.quickstart.EsriQuickStart.MapType;
-import com.esri.quickstart.EsriQuickStartEvent;
-import com.esri.quickstart.EsriQuickStartEventListener;
+import com.esri.core.tasks.geocode.LocatorGeocodeResult;
+import com.esri.core.tasks.geocode.LocatorReverseGeocodeResult;
 
 public class GPSTesterActivityController {
 	
@@ -68,14 +72,15 @@ public class GPSTesterActivityController {
 	private ImageView _settings;
 	private static ImageView _bestAvailableImageView;
 	
-	private static EsriQuickStart _map;
-	private static EsriQuickStartEventListener _mapListener = null;
+	private static MapView _map;
+	private ArcGISTiledMapServiceLayer _baseMap;
+	private static GraphicsLayer _graphicsLayer;
 
 	private LocationListener _locationListenerNetworkProvider = null;
 	private LocationListener _locationListenerGPSProvider = null;
 	private LocationManager _locationManager;
-	private Location _lastKnownLocationNetworkProvider = null;
-	private Location _lastKnownLocationGPSProvider = null;	
+	private static Location _lastKnownLocationNetworkProvider = null;
+	private static Location _lastKnownLocationGPSProvider = null;	
 	
 	private static ElapsedTimer _elapsedTimer;
 	private boolean _initialLapGPS = false;
@@ -102,6 +107,8 @@ public class GPSTesterActivityController {
 	private Button _pauseButton;
 	private Button _startButton;
 	
+	private Context _context;
+	
 	private ImageView _imSatelliteActivity;	
 	private ImageView _imGPS;
 	private ImageView _imNetwork;
@@ -112,12 +119,13 @@ public class GPSTesterActivityController {
 	private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,###.00");	
 	private static final DecimalFormat DECIMAL_FORMAT_4 = new DecimalFormat("#,###.0000");
 
-	public GPSTesterActivityController(Activity activity, Context context, EsriQuickStart map){
+	public GPSTesterActivityController(Activity activity, Context context, MapView map){
 		_map = map;
 		_activity = activity;
 		_elapsedTimer = new ElapsedTimer();
 	    _elapsedTime = (TextView) _activity.findViewById(R.id.elapsedTime);
 	    _elapsedTime.setTextColor(Color.YELLOW);
+	    _context = context;
 
 		_cachedLocationNetworkProvider = (TextView) _activity.findViewById(R.id.cachedNetworkProvider);
 		_cachedLocationGPSProvider = (TextView) _activity.findViewById(R.id.cachedGPS);
@@ -138,9 +146,8 @@ public class GPSTesterActivityController {
 		_imSatelliteActivity = (ImageView) _activity.findViewById(R.id.satellitedata);	
 		_imCriteria = (ImageView) _activity.findViewById(R.id.criteriaEnabledIcon);
 
-		//setUI();
+		setUI();
 		setOnClickListeners();	
-		context.registerReceiver(connectivityReceiver,new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 		
 		//This is very expensive to run - but hey if you need it...it's here.
 		//My recommendation is move it off the UI thread and put it on a timer.
@@ -173,8 +180,8 @@ public class GPSTesterActivityController {
 			@Override
 			public void onClick(View v) {
 				
-				if(_map.isMapLoaded() == true && _cachedNetworkLatitude != 0.0){					
-					_map.centerAt(_cachedNetworkLatitude, _cachedNetworkLongitude, 4500.00, true);
+				if(_map.isLoaded() == true && _cachedNetworkLatitude != 0.0){					
+					_map.centerAndZoom(_cachedNetworkLatitude, _cachedNetworkLongitude, 10);
 				}
 			}
 		});
@@ -184,8 +191,8 @@ public class GPSTesterActivityController {
 			
 			@Override
 			public void onClick(View v) {
-				if(_map.isMapLoaded() == true && _cachedGPSLatitude != 0.0){
-					_map.centerAt(_cachedGPSLatitude, _cachedGPSLongitude, 4500.00, true);
+				if(_map.isLoaded() == true && _cachedGPSLatitude != 0.0){
+					_map.centerAndZoom(_cachedGPSLatitude, _cachedGPSLongitude, 10);
 				}
 			}
 		});
@@ -195,8 +202,8 @@ public class GPSTesterActivityController {
 			
 			@Override
 			public void onClick(View v) {
-				if(_map.isMapLoaded() == true && _networkLatitude != 0.0){
-					_map.centerAt(_networkLatitude, _networkLongitude, 4500.00, true);
+				if(_map.isLoaded() == true && _networkLatitude != 0.0){
+					_map.centerAndZoom(_networkLatitude, _networkLongitude, 10);
 				}
 			}
 		});	
@@ -206,8 +213,8 @@ public class GPSTesterActivityController {
 			
 			@Override
 			public void onClick(View v) {
-				if(_map.isMapLoaded() == true && _gpsLatitude != 0.0){
-					_map.centerAt(_gpsLatitude, _gpsLongitude, 4500.00, true);
+				if(_map.isLoaded() == true && _gpsLatitude != 0.0){
+					_map.centerAndZoom(_gpsLatitude, _gpsLongitude, 10);
 				}
 			}
 		});		
@@ -259,6 +266,11 @@ public class GPSTesterActivityController {
 		final int width = display.getWidth(); //WARNING: this method was deprecated at API level 13
 		final int height = (int)(display.getHeight() * .3333); //WARNING: this method was deprecated at API level 13
 		
+		_baseMap = new ArcGISTiledMapServiceLayer(
+				"http://services.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer");
+		
+		_graphicsLayer = new GraphicsLayer();
+		
 		String bestAvailableText = "";
 		String cachedLocationNetworkProviderText = "";
 		String cachedLocationGPSProviderText = "";
@@ -273,12 +285,13 @@ public class GPSTesterActivityController {
 		_activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		
 		//Load the map
-		if(_map.layerExists(MapType.TOPO)){
-			_map.clearAllGraphics(); 
-		}
-		else{
-			_map.addLayer(MapType.TOPO, null, null, null,true);
-		}
+//		if(_map.layerExists(MapType.TOPO)){
+//			_map.clearAllGraphics(); 
+//		}
+//		else{
+			_map.addLayer(_baseMap);
+			_map.addLayer(_graphicsLayer);
+//		}
 		
 		bestAvailableText = "<b><font color='yellow'>Best Accuracy = N/A</b></font>" + 
 				"<br><b>Lat/Lon:</b> N/A" +  
@@ -310,52 +323,6 @@ public class GPSTesterActivityController {
 		_allLocationProvidersTextView.setText(Html.fromHtml("<b><font color='yellow'>List of available providers</b></font><br><br><br>"));		
 		_bestLocationProviderTextView.setText(Html.fromHtml("<b><font color='yellow'>List of best providers</b></font><br><br><br>"));
 		
-	}
-	
-	private void setMapListeners(){
-		_map.addEventListener(new EsriQuickStartEventListener() {
-			
-			@Override
-			public void onStatusEvent(EsriQuickStartEvent event, String status,
-					Object source) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void onStatusErrorEvent(EsriQuickStartEvent event, String status) {
-				Log.d("GPSTester","setMapListeners(): " + status.toString());
-			}
-			
-			@Override
-			public void onLocationShutdownEvent(EsriQuickStartEvent event, String reason) {
-				//Not currently used
-			}
-			
-			@Override
-			public void onLocationExceptionEvent(EsriQuickStartEvent event,
-					String message) {
-				//Not currently used
-			}
-			
-			@Override
-			public void onLocationChangedEvent(EsriQuickStartEvent event,
-					Location location) {
-				//Not currently used
-			}
-			
-			@Override
-			public void onAddressResultEvent(EsriQuickStartEvent event,
-					LocatorReverseGeocodeResult result, String exception) {
-				//Not currently used
-			}
-			
-			@Override
-			public void onAddressResultEvent(EsriQuickStartEvent event,
-					List<LocatorGeocodeResult> result, String exception) {
-				//Not currently used
-			}
-		});
 	}
 	
 	protected void setLocationManagerUI(boolean gpsProviderEnabled, boolean networkProviderEnabled){
@@ -411,7 +378,7 @@ public class GPSTesterActivityController {
 		
 	    	_bestAvailableInfoTextView.setText(Html.fromHtml(bestAvailableText));	    	
 	    		    	
-	    	delayedStartCachedLocationProviders();
+	    	delayedStartCachedLocationProviders(_lastKnownLocationNetworkProvider,_lastKnownLocationGPSProvider);
 		
 		}
 		
@@ -469,7 +436,7 @@ public class GPSTesterActivityController {
 		
 	    	_bestAvailableInfoTextView.setText(Html.fromHtml(bestAvailableText));	    	
 	    		    	
-	    	delayedStartCachedLocationProviders();
+	    	delayedStartCachedLocationProviders(_lastKnownLocationNetworkProvider,_lastKnownLocationGPSProvider);
 			
 		}
 
@@ -484,7 +451,7 @@ public class GPSTesterActivityController {
 		
 	    	_bestAvailableInfoTextView.setText(Html.fromHtml(bestAvailableText));	    	
 	    		    	
-	    	delayedStartCachedLocationProviders();
+	    	delayedStartCachedLocationProviders(_lastKnownLocationNetworkProvider,_lastKnownLocationGPSProvider);
 			
 		}
 		
@@ -671,10 +638,11 @@ public class GPSTesterActivityController {
 	    		_map.centerAt(_gpsLatitude, _gpsLongitude, true);
 	    	}
 	    	if(_preferences.getBoolean("pref_key_accumulateMapPoints", true) == false){
-	    		_map.clearPointsGraphicLayer();
+//	    		_map.clearPointsGraphicLayer();
+	    		_graphicsLayer.removeAll();
 	    	}
 	    	
-	    	_map.addGraphicLatLon(_gpsLatitude, _gpsLongitude, null, SimpleMarkerSymbol.STYLE.CIRCLE,Color.RED,redMapGraphicSize);
+	    	addGraphicLatLon(_gpsLatitude, _gpsLongitude, null, SimpleMarkerSymbol.STYLE.CIRCLE,Color.RED,redMapGraphicSize,_graphicsLayer,_map);
     	}
 	}
 	
@@ -812,9 +780,10 @@ public class GPSTesterActivityController {
 		    		_map.centerAt(_networkLatitude, _networkLongitude, true);
 		    	}		
 		    	if(accumlateMapPts == false){
-		    		_map.clearPointsGraphicLayer();
+		    		_graphicsLayer.removeAll();;
 		    	}		    	
-		    	_map.addGraphicLatLon(_networkLatitude, _networkLongitude, null, SimpleMarkerSymbol.STYLE.CIRCLE,Color.BLUE,blueMapGraphicSize);
+		    	
+		    	addGraphicLatLon(_networkLatitude, _networkLongitude, null, SimpleMarkerSymbol.STYLE.CIRCLE,Color.BLUE,blueMapGraphicSize,_graphicsLayer,_map);
 
 
 	      
@@ -888,9 +857,10 @@ public class GPSTesterActivityController {
 	 * Uses a Runnable to check at intervals until the base map has fully initialized. 
 	 * Fails if an initialized map is not detected after 5 tries. Map has to be loaded in 
 	 * order to manipulate it and draw graphics on it.
-	 * @param startGPS if you set this to false it will attempt to start Network Listeners. 
+	 * @param network network location
+	 * @param gps gps location
 	 */	
-	public void delayedStartCachedLocationProviders(){
+	public void delayedStartCachedLocationProviders(final Location network, final Location gps){
 		
 		Runnable task = new Runnable() {
 
@@ -903,18 +873,19 @@ public class GPSTesterActivityController {
 				counter++;
 						
 				try{ 
-					boolean test = _map.isMapLoaded();
-					Boolean mapLoaded = _map.layerExists(MapType.TOPO);		
-					Log.d("GPSTester","delayedStartCachedLocationProviders(): Testing if layer is loaded. Attempt #" + counter);
+					final boolean test = _map.isLoaded();
+					final Boolean mapLoaded = layerExists(MapType.TOPO);		
+					final Double networkLat = network.getLatitude();
+					final Double gpsLat = gps.getLatitude();
+					
+					Log.d("GPSTester","delayedStartCachedLocationProviders(): Testing if layer is loaded. Attempt #" + counter + ", loaded: " + mapLoaded);
 					if(test == true 
-							&& mapLoaded == true 
-							&& (_lastKnownLocationGPSProvider != null 
-							|| _lastKnownLocationNetworkProvider != null)){
+							&& (gpsLat instanceof Double 
+							|| networkLat instanceof Double)){
 						
 						Log.d("GPSTester","delayedStartCachedLocationProviders(): map is loaded.");														
 							//Run results back on the UI thread
 						_map.post(mDelayedStartUpdateResultsOnUI);
-
 					}
 					else if (counter < 5){
 							handler.postDelayed(this, 3000);
@@ -926,7 +897,7 @@ public class GPSTesterActivityController {
 							
 							@Override
 							public void run() {
-								_map.displayToast("Map not loading? Check internet connection.", Toast.LENGTH_LONG);									
+								displayToast("Map not loading? Check internet connection.", Toast.LENGTH_LONG);									
 							}
 						});						
 					}
@@ -939,6 +910,7 @@ public class GPSTesterActivityController {
 		
 		Thread thread = new Thread(task);
 		thread.start();
+		
 	}		
 	
 	//Run the results back on the UI thread
@@ -950,37 +922,43 @@ public class GPSTesterActivityController {
 			final boolean centerUsingGPS = _preferences.getBoolean("pref_key_centerOnGPSCoords", true);	
 			
 			if(centerUsingGPS == false && _cachedNetworkLatitude != 0.0 && _cachedNetworkLongitude != 0.0){
-				_map.centerAt(_cachedNetworkLatitude, _cachedNetworkLongitude, 4500.0, true);
+				_map.centerAndZoom(_cachedNetworkLatitude, _cachedNetworkLongitude,10);
 				
 		    	//Add Network location to map and give it a unique symbol
-				_map.addGraphicLatLon(
+				addGraphicLatLon(
 						_cachedNetworkLatitude,
 						_cachedNetworkLongitude, 
 		    			null, 
 		    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.GREEN,
-		    			15);
+		    			15,
+		    			_graphicsLayer,
+		    			_map);
 			}
 			else if(_cachedGPSLatitude == 0.0 && _cachedGPSLongitude == 0.0 && _cachedNetworkLatitude != 0.0 && _cachedNetworkLongitude != 0.0){
-				_map.centerAt(_cachedNetworkLatitude, _cachedNetworkLongitude, 4500.0, true);
+				_map.centerAndZoom(_cachedNetworkLatitude, _cachedNetworkLongitude,10);
 				
 		    	//Add Network location to map and give it a unique symbol
-				_map.addGraphicLatLon(
+				addGraphicLatLon(
 						_cachedNetworkLatitude,
 						_cachedNetworkLongitude, 
 		    			null, 
 		    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.GREEN,
-		    			15);
+		    			15,
+		    			_graphicsLayer,
+		    			_map);
 			}
 			else if(_cachedGPSLatitude != 0.0 && _cachedGPSLongitude != 0.0){
-	    		_map.centerAt(_cachedGPSLatitude, _cachedGPSLongitude, 4500.0, true);
+	    		_map.centerAndZoom(_cachedGPSLatitude, _cachedGPSLongitude, 10);
 	    		
 		    	//Add GPS location to the map and give it a unique symbol
-				_map.addGraphicLatLon(
+				addGraphicLatLon(
 						_cachedGPSLatitude, 
 						_cachedGPSLongitude, 
 		    			null, 
 		    			SimpleMarkerSymbol.STYLE.DIAMOND,Color.RED,
-		    			15);	
+		    			15,
+		    			_graphicsLayer,
+		    			_map);	
 			}
 			else{
 				Log.d("GPSTester", "mDelayedStartUpdateResultsOnUI: no valid locations found.");
@@ -995,7 +973,7 @@ public class GPSTesterActivityController {
 	 * @param startOptions True starts GPS. False attempts to start Network Listeners. Null will start both. 
 	 */	
 	public void delayedStartLocationProvider(final Boolean startOptions, final Boolean isNetworkAvailable){
-		
+Log.d("GPSTester","DELAY DELAY DELAY LOCATION");		
 		//If the network isn't available we can't use the map offline in this version
 		if(isNetworkAvailable == false){
 			
@@ -1017,8 +995,8 @@ public class GPSTesterActivityController {
 					counter++;
 	
 					try{ 
-						boolean test = _map.isMapLoaded(); 
-						Log.d("GPSTester","delayedStartLocationProvider(): Testing if layer is loaded. Attempt #" + counter);
+						boolean test = _map.isLoaded(); 
+						Log.d("GPSTester","delayedStartLocationProvider(): Testing if layer is loaded. Attempt #" + counter + ", loaded = " + test);
 						if(test == true){
 							
 							Log.d("GPSTester","delayedStartLocationProvider(): map is loaded.");
@@ -1038,6 +1016,8 @@ public class GPSTesterActivityController {
 									else{
 										setLocationListenerNetworkProvider();
 									}
+									
+//									_context.registerReceiver(connectivityReceiver,new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 								}
 							});									
 						}
@@ -1052,7 +1032,7 @@ public class GPSTesterActivityController {
 								
 								@Override
 								public void run() {
-									_map.displayToast("Map not loading? Check internet connection.", Toast.LENGTH_LONG);									
+									displayToast("Map not loading? Check internet connection.", Toast.LENGTH_LONG);									
 								}
 							});	
 						}						
@@ -1073,7 +1053,7 @@ public class GPSTesterActivityController {
 	 * Start and reset everything
 	 */
 	public void startLocation(){
-		
+
 		if(_locationManager == null){
 
 			if(_startButton != null){
@@ -1102,12 +1082,12 @@ public class GPSTesterActivityController {
 		    	_imCriteria.setImageResource(R.drawable.redsphere31);
 		    }
 		    
-			setMapListeners();
+//			setMapListeners();
 		    setUI();
 			setLocationManagerUI(gpsProviderEnabled,networkProviderEnabled);		
-			
+	
 			if(gpsProviderEnabled == true && gpsPreferences == true){
-				
+				Log.d("GPSTester","CHECK1 CHECK1 CHECK1");		
 				if(networkProviderEnabled == true && networkPreferences == true && isNetworkAvailable == true){					
 					Log.d("GPSTester","Startup: GPS enabled true. GPS prefs true. Network enabled. Network Prefs true");
 					delayedStartLocationProvider(null,true);					
@@ -1121,14 +1101,14 @@ public class GPSTesterActivityController {
 					
 					_imGPS.setImageResource(R.drawable.greensphere31);	
 					_imNetwork.setImageResource(R.drawable.redsphere31);
-					_map.displayToast("No network connection available.", Toast.LENGTH_LONG);
+					displayToast("No network connection available.", Toast.LENGTH_LONG);
 					
 					//Inflate alert dialog
 					networkFragment.show(_activity.getFragmentManager(), "NetworkAlert");
 				}
 			}
 			else if(gpsProviderEnabled == true && gpsPreferences == false){
-				
+				Log.d("GPSTester","CHECK2 CHECK2 CHECK2");		
 				if(networkProviderEnabled == true && networkPreferences == true && isNetworkAvailable == true){
 					Log.d("GPSTester","Startup: GPS enabled. GPS prefs false. Network enabled. Network Prefs true ");
 					delayedStartLocationProvider(false,true);
@@ -1140,7 +1120,7 @@ public class GPSTesterActivityController {
 					Log.d("GPSTester","Startup: GPS enabled true. GPS prefs false. Network not enabled.");					
 					_imGPS.setImageResource(R.drawable.redsphere31);	
 					_imNetwork.setImageResource(R.drawable.redsphere31);
-					_map.displayToast("No network connection available.", Toast.LENGTH_LONG);
+					displayToast("No network connection available.", Toast.LENGTH_LONG);
 					
 					//Inflate alert dialog
 					networkFragment.show(_activity.getFragmentManager(), "NetworkAlert");					
@@ -1148,7 +1128,7 @@ public class GPSTesterActivityController {
 			}						
 
 			else if(gpsProviderEnabled == false){
-				
+				Log.d("GPSTester","CHECK3 CHECK3 CHECK3");		
 				if(networkProviderEnabled == true && networkPreferences == true && isNetworkAvailable == true){
 					Log.d("GPSTester","Startup: GPS not enabled. Network enabled. Network Prefs true.");
 					delayedStartLocationProvider(false,true);
@@ -1298,8 +1278,114 @@ public class GPSTesterActivityController {
 		
 	}
 	
+	/**
+	 * Helper method that displays a TOAST message. Default is TOAST.LENGTH_LONG.
+	 * @param message The message you wish to be displayed in TOAST.
+	 * @param toastLength (Optional) valid options are Toast.LENGTH_LONG or Toast.LENGTH_SHORT.
+	 */
+	public void displayToast(String message,int... toastLength) {
+		int length = Toast.LENGTH_LONG;
+		if(toastLength.length != 0){
+			length = toastLength[0];
+		}
+		Toast toast = Toast.makeText(_context,
+				message,
+				length);
+		toast.show();
+	}
+	
+	/**
+	 * Helper method that uses latitude/longitude points to programmatically 
+	 * draw a <code>SimpleMarkerSymbol</code> and adds the <code>Graphic</code> to map.
+	 * @param latitude
+	 * @param longitude
+	 * @param attributes
+	 * @param style You defined the style via the Enum <code>SimpleMarkerSymbol.STYLE</code>
+	 */
+	public static void addGraphicLatLon(double latitude, double longitude, Map<String, Object> attributes, 
+			SimpleMarkerSymbol.STYLE style,int color,int size, GraphicsLayer graphicsLayer, MapView map){
+		
+		Point latlon = new Point(longitude,latitude);		
+		
+		//Convert latlon Point to mercator map point.
+		Point point = (Point)GeometryEngine.project(latlon,SpatialReference.create(4326), map.getSpatialReference());		
+		
+		//Set market's color, size and style. You can customize these as you see fit
+		SimpleMarkerSymbol symbol = new SimpleMarkerSymbol(color,size, style);			
+		Graphic graphic = new Graphic(point, symbol,attributes);
+		graphicsLayer.addGraphic(graphic);
+	}
+	
+	/**
+	 * Returns whether or not a MapType layer has been added or not via <code>addLayer()</code>
+	 * @param maptype
+	 * @return Boolean confirms the layer exists
+	 */
+	public Boolean layerExists(MapType maptype){
+		Boolean exists = false;
+		String layerName = null;
+		Layer[] layerArr = _map.getLayers();
+		
+		for(Layer layer : layerArr)
+		{
+			if(layer instanceof ArcGISTiledMapServiceLayer){
+				ArcGISTiledMapServiceLayer tempMap = (ArcGISTiledMapServiceLayer) layer;
+				ArcGISLayerInfo[] info = tempMap.getLayers();
+				
+				if(info != null){
+					layerName = info[0].getName().toLowerCase();
+					if(layerName.contains("world imagery") && maptype == MapType.SATELLITE){
+						exists = true;
+						break;
+					}
+					if(layerName.contains("topographic info") && maptype == MapType.TOPO){
+						exists = true;
+						break;
+					}		
+					if(layerName.contains("world street map") && maptype == MapType.STREETS){
+						exists = true;
+						break;
+					}				
+				}
+			}
+		}
+		
+		return exists;
+	}	
+	
 	public enum BestAvailableType{
 		CACHED_NETWORK,CACHED_GPS,GPS,NETWORK,NULL
+	}
+	
+	/**
+	 * This enum specifies default maps that are available through this library.
+	 */
+	public enum MapType{
+		/**
+		 * Street map world
+		 */
+		STREETS("http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer"),
+		/**
+		 * Topographic map world
+		 */
+		TOPO("http://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer"),
+		/**
+		 * Satellite imagery map world
+		 */
+		SATELLITE("http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer");
+		
+		private String url;
+		private MapType(String url){
+			this.url = url;
+		}
+		
+		/**
+		 * Allows you to retrieve the URL for each MapType enum
+		 * @return URL String
+		 */
+		public String getURL(){
+			return url;
+		}	
 	}
 	
 	private static void setBestAvailableImageView(BestAvailableType type){
