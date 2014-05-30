@@ -1,5 +1,8 @@
 # GPSTester - Changelog
 
+## Version 1.5 - May 30, 2014
+Updated to work with ArcGIS SDK for Android v10.2.3 and Android v4.2.2
+
 ## Version 1.4.2 - November 5, 2013
 Updated to work with ArcGIS SDK for Android v10.2
 
