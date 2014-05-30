@@ -12,12 +12,10 @@ import android.view.MenuItem;
 
 import com.agup.gps.controllers.GPSTesterActivityController;
 import com.esri.android.map.MapView;
-import com.esri.android.map.ags.ArcGISTiledMapServiceLayer;
 
 public class GPSTesterActivity extends Activity {
 	
 	private GPSTesterActivityController _activityController = null;
-//	private EsriQuickStart _map;
 	private MapView _map; 
 	private static SharedPreferences _preferences;
 	
@@ -27,7 +25,6 @@ public class GPSTesterActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-//		_map = new EsriQuickStart(this,R.id.map);
 		_map = (MapView)findViewById(R.id.map);
 		
 		_activityController = new GPSTesterActivityController(this,GPSTesterActivity.this,_map);	

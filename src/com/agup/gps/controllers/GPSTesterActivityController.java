@@ -12,7 +12,6 @@ import android.app.DialogFragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.location.Criteria;
@@ -20,7 +19,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
-import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -53,8 +51,6 @@ import com.esri.core.geometry.Point;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.SimpleMarkerSymbol;
-import com.esri.core.tasks.geocode.LocatorGeocodeResult;
-import com.esri.core.tasks.geocode.LocatorReverseGeocodeResult;
 
 public class GPSTesterActivityController {
 	
@@ -181,7 +177,7 @@ public class GPSTesterActivityController {
 			public void onClick(View v) {
 				
 				if(_map.isLoaded() == true && _cachedNetworkLatitude != 0.0){					
-					_map.centerAndZoom(_cachedNetworkLatitude, _cachedNetworkLongitude, 10);
+		    		centerAndZoom(_cachedGPSLatitude,_cachedGPSLongitude);
 				}
 			}
 		});
@@ -192,7 +188,7 @@ public class GPSTesterActivityController {
 			@Override
 			public void onClick(View v) {
 				if(_map.isLoaded() == true && _cachedGPSLatitude != 0.0){
-					_map.centerAndZoom(_cachedGPSLatitude, _cachedGPSLongitude, 10);
+		    		centerAndZoom(_cachedGPSLatitude,_cachedGPSLongitude);
 				}
 			}
 		});
@@ -203,7 +199,7 @@ public class GPSTesterActivityController {
 			@Override
 			public void onClick(View v) {
 				if(_map.isLoaded() == true && _networkLatitude != 0.0){
-					_map.centerAndZoom(_networkLatitude, _networkLongitude, 10);
+		    		centerAndZoom(_cachedGPSLatitude,_cachedGPSLongitude);
 				}
 			}
 		});	
@@ -214,7 +210,7 @@ public class GPSTesterActivityController {
 			@Override
 			public void onClick(View v) {
 				if(_map.isLoaded() == true && _gpsLatitude != 0.0){
-					_map.centerAndZoom(_gpsLatitude, _gpsLongitude, 10);
+		    		centerAndZoom(_cachedGPSLatitude,_cachedGPSLongitude);
 				}
 			}
 		});		
@@ -922,7 +918,7 @@ public class GPSTesterActivityController {
 			final boolean centerUsingGPS = _preferences.getBoolean("pref_key_centerOnGPSCoords", true);	
 			
 			if(centerUsingGPS == false && _cachedNetworkLatitude != 0.0 && _cachedNetworkLongitude != 0.0){
-				_map.centerAndZoom(_cachedNetworkLatitude, _cachedNetworkLongitude,10);
+	    		centerAndZoom(_cachedGPSLatitude,_cachedGPSLongitude);
 				
 		    	//Add Network location to map and give it a unique symbol
 				addGraphicLatLon(
@@ -935,7 +931,7 @@ public class GPSTesterActivityController {
 		    			_map);
 			}
 			else if(_cachedGPSLatitude == 0.0 && _cachedGPSLongitude == 0.0 && _cachedNetworkLatitude != 0.0 && _cachedNetworkLongitude != 0.0){
-				_map.centerAndZoom(_cachedNetworkLatitude, _cachedNetworkLongitude,10);
+	    		centerAndZoom(_cachedGPSLatitude,_cachedGPSLongitude);
 				
 		    	//Add Network location to map and give it a unique symbol
 				addGraphicLatLon(
@@ -948,7 +944,7 @@ public class GPSTesterActivityController {
 		    			_map);
 			}
 			else if(_cachedGPSLatitude != 0.0 && _cachedGPSLongitude != 0.0){
-	    		_map.centerAndZoom(_cachedGPSLatitude, _cachedGPSLongitude, 10);
+	    		centerAndZoom(_cachedGPSLatitude,_cachedGPSLongitude);
 	    		
 		    	//Add GPS location to the map and give it a unique symbol
 				addGraphicLatLon(
@@ -973,7 +969,7 @@ public class GPSTesterActivityController {
 	 * @param startOptions True starts GPS. False attempts to start Network Listeners. Null will start both. 
 	 */	
 	public void delayedStartLocationProvider(final Boolean startOptions, final Boolean isNetworkAvailable){
-Log.d("GPSTester","DELAY DELAY DELAY LOCATION");		
+	
 		//If the network isn't available we can't use the map offline in this version
 		if(isNetworkAvailable == false){
 			
@@ -1047,6 +1043,11 @@ Log.d("GPSTester","DELAY DELAY DELAY LOCATION");
 			Thread thread = new Thread(task);
 			thread.start();
 		}
+	}
+	
+	public void centerAndZoom(double lat, double lon){
+		_map.centerAt(lat, lon, true);
+		_map.setScale(9027.977411);
 	}
 	
 	/**
