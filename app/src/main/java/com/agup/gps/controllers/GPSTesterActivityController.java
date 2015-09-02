@@ -67,7 +67,6 @@ public class GPSTesterActivityController {
 	private TextView _cachedLocationGPSProvider;
 	private static TextView _bestAvailableInfoTextView;
 	private TextView _elapsedTime;
-	private ImageView _settings;
 	private static ImageView _bestAvailableImageView;
 	
 	private static MapView _map;
@@ -135,7 +134,6 @@ public class GPSTesterActivityController {
 		_bestLocationProviderTextView = (TextView) _activity.findViewById(R.id.bestLocationProviders);
 		_bestAvailableInfoTextView = (TextView) _activity.findViewById(R.id.bestAvailableInfo);
 		_bestAvailableImageView = (ImageView) _activity.findViewById(R.id.bestAvailableImageView);
-		_settings = (ImageView) _activity.findViewById(R.id.settings);
 		_pauseButton = (Button) _activity.findViewById(R.id.PauseButton);
 		_startButton = (Button)_activity.findViewById(R.id.StartAllButton);
 		_preferences = PreferenceManager.getDefaultSharedPreferences(_activity);
@@ -215,16 +213,7 @@ public class GPSTesterActivityController {
 		    		centerAndZoom(_cachedGPSLatitude,_cachedGPSLongitude);
 				}
 			}
-		});		
-		
-//		_settings.setOnClickListener(new View.OnClickListener() {
-//
-//			@Override
-//			public void onClick(View v) {
-//				Intent i = new Intent(_activity.getApplicationContext(),SettingsActivity.class);
-//				_activity.startActivity(i);
-//			}
-//		});
+		});
 		
 //		_pauseButton.setBackgroundColor(Color.LTGRAY);
 		_pauseButton.setOnClickListener(new View.OnClickListener() {			
