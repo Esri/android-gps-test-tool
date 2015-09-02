@@ -1,6 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-    <menu xmlns:android="http://schemas.android.com/apk/res/android">
-        <item 
-            android:id="@+id/settings_option_item"
-            android:title="Settings"/>
-    </menu>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/settings_option_item"
+        android:title="Settings"/>
+    <item
+        android:id="@+id/satellitedata2"
+        android:title="Satellite"
+        android:icon="@drawable/radar26"/>
+</menu>
