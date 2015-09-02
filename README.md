@@ -40,17 +40,15 @@ Settings View:
 
 ## Requirements (IMPORTANT)
 
-* Eclipse
-* Google Android SDK (version 15 or greater strongly recommended)
-* Android Phone or Tablet (v3.x or greater) App contains UI fragments.
-* Mapping Library - Installation instructions here: [ArcGIS Runtime SDK for Android](http://resources.arcgis.com/en/communities/runtime-android/)
+* Android Studio
+* Google Android SDK (version 21 or greater)
+* Android Phone or Tablet (v5.x) App contains UI fragments.
+* Mapping Library - Installation instructions here: [ArcGIS Runtime SDK for Android](https://developers.arcgis.com/android/guide/install-and-set-up.htm)
 * Experience with Java software development
-
-Click [here](http://resources.arcgis.com/en/help/android-sdk/concepts/0119/01190000002m000000.htm) for more information on installing the mapping library.
 
 ## Resources
 
-* [ArcGIS Runtime SDK for Android Resource Center](http://resources.arcgis.com/en/communities/runtime-android/)
+* [ArcGIS Runtime SDK for Android Resource Center](https://developers.arcgis.com/android/)
 * [ArcGIS Blog](http://blogs.esri.com/esri/arcgis/)
 * Twitter [@esri](http://twitter.com/esri)
 
@@ -63,7 +61,7 @@ Find a bug or want to request a new feature?  Please let us know by submitting a
 Anyone and everyone is welcome to contribute. 
 
 ## Licensing
-Copyright 2013 Esri
+Copyright 2015 Esri
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
