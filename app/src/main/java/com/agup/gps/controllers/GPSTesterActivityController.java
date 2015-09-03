@@ -105,8 +105,7 @@ public class GPSTesterActivityController {
 	private Button _startButton;
 	
 	private Context _context;
-	
-	private ImageView _imSatelliteActivity;	
+
 	private ImageView _imGPS;
 	private ImageView _imNetwork;
 	private ImageView _imCriteria;
@@ -138,8 +137,7 @@ public class GPSTesterActivityController {
 		_startButton = (Button)_activity.findViewById(R.id.StartAllButton);
 		_preferences = PreferenceManager.getDefaultSharedPreferences(_activity);
 		_imGPS = (ImageView)_activity.findViewById(R.id.gpsEnabledIcon);
-		_imNetwork = (ImageView)_activity.findViewById(R.id.networkEnabledIcon);	
-		_imSatelliteActivity = (ImageView) _activity.findViewById(R.id.satellitedata);	
+		_imNetwork = (ImageView)_activity.findViewById(R.id.networkEnabledIcon);
 		_imCriteria = (ImageView) _activity.findViewById(R.id.criteriaEnabledIcon);
 
 		setUI();
@@ -234,15 +232,6 @@ public class GPSTesterActivityController {
 				else{
 					stopLocation();									
 				}
-			}
-		});	
-		
-		_imSatelliteActivity.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				Intent i = new Intent(_activity.getApplicationContext(),SatelliteDataActivity.class);
-				_activity.startActivity(i);
 			}
 		});
 	}
@@ -1308,10 +1297,15 @@ public class GPSTesterActivityController {
 		graphicsLayer.addGraphic(graphic);
 	}
 
-    public void launchSettings(){
+    public void launchSettingsView(){
         Intent i = new Intent(_activity.getApplicationContext(),SettingsActivity.class);
         _activity.startActivity(i);
     }
+
+	public void launchSatelliteView(){
+		Intent i = new Intent(_activity.getApplicationContext(),SatelliteDataActivity.class);
+		_activity.startActivity(i);
+	}
 
     /**
 	 * Returns whether or not a MapType layer has been added or not via <code>addLayer()</code>

@@ -58,12 +58,14 @@ public class GPSTesterActivity extends Activity {
     	
     	switch( item.getItemId()) {
             case R.id.settings_option_item:
-                _activityController.launchSettings();
+                _activityController.launchSettingsView();
                 return true;
+			case R.id.satellitedata2:
+				_activityController.launchSatelliteView();
+				return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
-//        return true;
     }
 
 	@Override 
