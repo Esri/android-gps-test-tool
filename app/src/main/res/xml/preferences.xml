@@ -1,0 +1,99 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:key="test">
+    <CheckBoxPreference
+        android:key="pref_key_gps"
+        android:title="Use GPS"
+        android:summary="Toggles apps use of GPS. Does not have any affect on device settings."
+        android:defaultValue="true"/>
+    <CheckBoxPreference
+        android:key="pref_key_network"
+        android:title="Use Network"
+        android:summary="Allows this app to toggle the use of the Network Provider."
+        android:defaultValue="true"/>
+    <CheckBoxPreference
+        android:key="pref_key_autostart"
+        android:title="Auto-start GPS"
+        android:summary="Allows app to automatically start GPS and Network Service if they are available."
+        android:defaultValue="true"/>
+    <EditTextPreference
+        android:key="pref_key_updateGPSMinTime"
+        android:title="GPS Min Update Time"
+        android:summary="Minimum time (ms) for LocationService GPS to wait before updating."
+        android:defaultValue="2000"
+        android:inputType="number"/>
+    <EditTextPreference
+        android:key="pref_key_updateGPSMinDistance"
+        android:title="GPS Min Update Distance"
+        android:summary="Minimum distance (meters) for LocationService GPS to wait before updating."
+        android:defaultValue="10"
+        android:inputType="number"/>
+    <EditTextPreference
+        android:key="pref_key_updateNetworkMinTime"
+        android:title="Network Min Update Time"
+        android:summary="Minimum time (ms) for LocationService Network to wait before updating."
+        android:defaultValue="2000"
+        android:inputType="number"/>
+    <EditTextPreference
+        android:key="pref_key_updateNetworkMinDistance"
+        android:title="Network Min Update Distance"
+        android:summary="Minimum distance (meters) for LocationService Network to wait before updating."
+        android:defaultValue="10"
+        android:inputType="number"/>
+    <PreferenceCategory android:title="Criteria Preferences">
+        <CheckBoxPreference
+            android:key="pref_key_useCriteria"
+            android:title="Use Custom Criteria"
+            android:summary="App will use custom criteria to determine best Location provider."
+            android:defaultValue="false"/>
+        <ListPreference
+            android:key="pref_key_setAccuracy"
+            android:title="Set Accuracy"
+            android:defaultValue="1"
+            android:summary="Sets the criteria preferences for accuracy."
+            android:entries="@array/accuracy_list_preference"
+            android:entryValues="@array/accuracy_list_values"
+            android:dialogTitle="Set Accuracy"/>
+        <ListPreference
+            android:key="pref_key_setPower"
+            android:title="Set Power"
+            android:defaultValue="1"
+            android:summary="Sets the criteria preferences for power consumption."
+            android:entries="@array/power_list_preference"
+            android:entryValues="@array/power_list_values"
+            android:dialogTitle="Choose power preference"/>
+        <ListPreference
+            android:key="pref_key_setCost"
+            android:title="Set Cost"
+            android:defaultValue="true"
+            android:summary="Sets whether or not the app is allowed to incur monetary cost."
+            android:entries="@array/cost_list_preference"
+            android:entryValues="@array/cost_list_values"
+            android:dialogTitle="Incur monetary cost"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Mapping Related Preferences">
+        <EditTextPreference
+            android:key="pref_key_gpsGraphicSize"
+            android:title="Red GPS Graphic Size"
+            android:summary="Sets the size of the red graphic indicating a GPS point on the map (default = 10)."
+            android:defaultValue="10"
+            android:inputType="number"/>
+        <EditTextPreference
+            android:key="pref_key_networkGraphicSize"
+            android:title="Blue Network Location Graphic Size"
+            android:summary="Sets the size of the blue graphic indicating a network location point on map (default = 10)."
+            android:defaultValue="10"
+            android:inputType="number"/>
+        <CheckBoxPreference
+            android:key="pref_key_centerOnGPSCoords"
+            android:title="Center using GPS"
+            android:summary="Centers map using GPS values. Uncheck to center using Network Location coordinates."
+            android:defaultValue="true"/>
+        <CheckBoxPreference
+            android:key="pref_key_accumulateMapPoints"
+            android:title="Accumulate Locations on Map"
+            android:summary="If unchecked only the most current GPS or Network location point will be drawn on the map."
+            android:defaultValue="true"/>
+    </PreferenceCategory>
+
+
+</PreferenceScreen>
