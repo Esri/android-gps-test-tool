@@ -1,4 +1,19 @@
 # GPSTester - Changelog
+## Version 2.0 - Sep, 2015
+Breaking Changes. Migrates the project from Eclipse to Android Studio.
+
+**Enhancements**
+
+- Completely restructured project directory to Android Studio pattern
+- Updated to work with ArcGIS Runtime SDK for Android v10.2.6-2 
+- Removed old Eclipse project files
+- Moved action icons to the ActionBar options menu
+- Added contributing.md and .gitignore
+- Deleted /libs
+- Deleted drawable-hdpi/ldpi/mdpi
+- Deleted config
+- Added mipmap
+- Added grable build files
 
 ## Version 1.5 - May 30, 2014
 Updated to work with ArcGIS SDK for Android v10.2.3 and Android v4.2.2
