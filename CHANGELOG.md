@@ -1,5 +1,14 @@
 # GPSTester - Changelog
-## Version 2.0 - Sep, 2015
+
+## Version 2.1 - Sept. 10, 2015
+
+No beaking changes.
+
+**Enhancements**
+
+- Closes #19. Slows down app clock from 1 millisecond to 1000. This reduced CPU usage from 30 - 40% to less than 10%.
+
+## Version 2.0 - Sept. 3, 2015
 Breaking Changes. Migrates the project from Eclipse to Android Studio.
 
 **Enhancements**
