@@ -623,7 +623,9 @@ public class GPSTesterActivityController {
 	}
 	
 	private void setLocationListenerGPSProvider(final Boolean isNetworkAvailable){
-		
+
+		Log.d("GPSTester","Starting up LocationListener for GPS_PROVIDER");
+
 		_locationListenerGPSProvider = new LocationListener() {
 	
 			boolean initialLapNetwork = true;	
@@ -699,7 +701,9 @@ public class GPSTesterActivityController {
 
 		final int blueMapGraphicSize = Integer.valueOf(_preferences.getString("pref_key_networkGraphicSize", "10"));
 		final boolean centerUsingGPS = _preferences.getBoolean("pref_key_centerOnGPSCoords", true);		
-		final boolean accumlateMapPts = _preferences.getBoolean("pref_key_accumulateMapPoints", true);		
+		final boolean accumlateMapPts = _preferences.getBoolean("pref_key_accumulateMapPoints", true);
+
+        Log.d("GPSTester","Starting up LocationListener for NETWORK_PROVIDER");
 		
 		_locationListenerNetworkProvider = new LocationListener() {
 			
@@ -1042,7 +1046,7 @@ public class GPSTesterActivityController {
 				_startButton.setText("Stop");
 			}
 			
-			_elapsedTimer.startTimer(1,_elapsedTime);
+			_elapsedTimer.startTimer(1000,_elapsedTime);
 			_initialGPSTime = _elapsedTimer.getElapsedtime();
 			_initialNetworkTime = _elapsedTimer.getElapsedtime();
 			_locationManager = (LocationManager) _activity.getSystemService(Context.LOCATION_SERVICE);
